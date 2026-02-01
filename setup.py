@@ -7,7 +7,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
-    name="text-summarizer",
+    name="text-summarizer-aweebtaku",
     version="1.0.0",
     author="Your Name",
     author_email="your.email@example.com",
@@ -31,7 +31,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "text-summarizer=text_summarizer.cli:main",
+            "text-summarizer-aweebtaku=text_summarizer.cli:main",
         ],
     },
     include_package_data=True,

@@ -18,12 +18,18 @@ A Python-based text summarization tool that uses GloVe word embeddings and PageR
 - Python 3.8 or higher
 - Required packages (automatically installed): pandas, numpy, nltk, scikit-learn, networkx
 
+### Install from PyPI
+
+```bash
+pip install text-summarizer-aweebtaku
+```
+
 ### Install from Source
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/text-summarizer.git
-cd text-summarizer
+git clone https://github.com/AWeebTaku/Summarizer.git
+cd Summarizer
 ```
 
 2. Install the package:
@@ -48,10 +54,10 @@ Place the `glove.6B.100d.txt` file in the project root or specify the path.
 
 ```bash
 # Summarize a CSV file
-text-summarizer --csv-file data/tennis.csv --article-id 1
+text-summarizer-aweebtaku --csv-file data/tennis.csv --article-id 1
 
 # Interactive mode
-text-summarizer
+text-summarizer-aweebtaku
 ```
 
 ### GUI Interface
@@ -125,7 +131,7 @@ If you use this tool in your research, please cite:
 @software{text_summarizer,
   title = {Text Summarizer},
   author = {Your Name},
-  url = {https://github.com/yourusername/text-summarizer},
+  url = {https://github.com/AWeebTaku/Summarizer},
   year = {2024}
 }
 ```
