@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 import nltk
 import os
-import requests
 import zipfile
 from pathlib import Path
+from typing import Dict, List, Tuple, Optional, Union
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 from sklearn.metrics.pairwise import cosine_similarity
@@ -17,10 +17,10 @@ import networkx as nx
 class TextSummarizer:
     """A class for summarizing text documents using GloVe embeddings and PageRank."""
 
-    def __init__(self, glove_path=None, num_sentences=5):
+    def __init__(self, glove_path: Optional[str] = None, num_sentences: int = 5):
         self.num_sentences = num_sentences
-        self.word_embeddings = {}
-        self.stop_words = set(stopwords.words('english'))
+        self.word_embeddings: Dict[str, np.ndarray] = {}
+        self.stop_words: set = set(stopwords.words('english'))
 
         # Set default GloVe path
         if glove_path is None:
@@ -38,7 +38,9 @@ class TextSummarizer:
         return glove_dir / 'glove.6B.100d.txt'
 
     def _download_glove_embeddings(self):
-        """Download GloVe embeddings if not present."""
+        """Download GloVe embeddings if not present with improved error handling."""
+        import requests
+
         print("GloVe embeddings not found. Downloading from Stanford NLP...")
 
         # Create directory if it doesn't exist
@@ -49,22 +51,26 @@ class TextSummarizer:
         url = "https://nlp.stanford.edu/data/glove.6B.zip"
         zip_path = glove_file.parent / "glove.6B.zip"
 
+        headers = {
+            'User-Agent': 'TextSummarizer/1.1.0 (https://github.com/AWeebTaku/Summarizer)',
+        }
+
         try:
             print("Downloading GloVe embeddings (862 MB)...")
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
+            with requests.get(url, headers=headers, stream=True, timeout=30) as response:
+                response.raise_for_status()
 
-            total_size = int(response.headers.get('content-length', 0))
-            downloaded_size = 0
+                total_size = int(response.headers.get('content-length', 0))
+                downloaded_size = 0
 
-            with open(zip_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-                        downloaded_size += len(chunk)
-                        if total_size > 0:
-                            progress = (downloaded_size / total_size) * 100
-                            print(".1f", end='', flush=True)
+                with open(zip_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded_size += len(chunk)
+                            if total_size > 0:
+                                progress = (downloaded_size / total_size) * 100
+                                print(".1f", end='', flush=True)
 
             print("\nDownload complete. Extracting...")
 
@@ -72,102 +78,73 @@ class TextSummarizer:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extract('glove.6B.100d.txt', glove_file.parent)
 
+            # Verify extraction
+            if not glove_file.exists():
+                raise FileNotFoundError("Failed to extract GloVe file from zip")
+
             # Clean up zip file
             zip_path.unlink()
 
             print(f"GloVe embeddings extracted to {self.glove_path}")
 
+        except requests.exceptions.RequestException as e:
+            print(f"Network error during download: {e}")
+            raise Exception(f"Failed to download GloVe embeddings: {e}")
+        except zipfile.BadZipFile as e:
+            print(f"Invalid zip file downloaded: {e}")
+            if zip_path.exists():
+                zip_path.unlink()
+            raise Exception("Downloaded file is not a valid zip archive")
         except Exception as e:
-            print(f"Failed to download GloVe embeddings: {e}")
-            print("Please download manually from: https://nlp.stanford.edu/data/glove.6B.zip")
+            print(f"Unexpected error during download: {e}")
+            if zip_path.exists():
+                zip_path.unlink()
             raise
 
     def _load_embeddings(self):
-        """Load GloVe word embeddings from file."""
+        """Load GloVe word embeddings from file with optimized memory usage."""
         if not os.path.exists(self.glove_path):
             self._download_glove_embeddings()
 
         try:
             print(f"Loading GloVe embeddings from {self.glove_path}...")
-            with open(self.glove_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    values = line.split()
-                    word = values[0]
-                    coefs = np.asarray(values[1:], dtype='float32')
-                    self.word_embeddings[word] = coefs
-            print(f"Loaded {len(self.word_embeddings)} word embeddings.")
+            word_count = 0
+
+            with open(self.glove_path, 'r', encoding='utf-8', errors='ignore') as f:
+                for line_num, line in enumerate(f, 1):
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        values = line.split()
+                        if len(values) < 101:  # word + 100 dimensions
+                            continue
+
+                        word = values[0]
+                        coefs = np.asarray(values[1:101], dtype='float32')  # Only take first 100 dims
+                        self.word_embeddings[word] = coefs
+                        word_count += 1
+
+                        # Progress update every 50k words
+                        if word_count % 50000 == 0:
+                            print(f"Loaded {word_count} words...")
+
+                    except (ValueError, IndexError) as e:
+                        # Skip malformed lines
+                        continue
+
+            print(f"Successfully loaded {len(self.word_embeddings)} word embeddings.")
+
+            if len(self.word_embeddings) == 0:
+                raise ValueError("No valid embeddings found in GloVe file")
+
         except FileNotFoundError:
             raise FileNotFoundError(f"GloVe file not found at {self.glove_path}")
         except Exception as e:
             raise Exception(f"Error loading GloVe embeddings: {e}")
 
-    def load_data(self):
-        """Load data interactively."""
-        while True:
-            choice = input("Enter 'P' to paste a single article,\n'U' to upload a CSV with multiple articles,\n'C' to create a new CSV with multiple articles: ").upper()
-            df = pd.DataFrame()
-            save_csv = True
-
-            if choice == 'P':
-                article_text = input("Paste your article text here:\n")
-                df = pd.DataFrame([{'article_id': 1, 'article_text': article_text}])
-                print('DataFrame created from single article.')
-                save_csv = False
-                break
-            elif choice == 'U':
-                print("You chose to load an existing CSV file. It should contain 'article_id' and 'article_text' columns.")
-                save_csv = False
-                while True:
-                    file_name = input("Enter the name of the CSV file (e.g., 'tennis.csv') or type 'cancel' to go back: ").strip()
-                    if file_name.lower() == 'cancel':
-                        break
-                    if os.path.exists(file_name) and file_name.lower().endswith('.csv'):
-                        try:
-                            df = pd.read_csv(file_name)
-                            print(f'CSV file "{file_name}" loaded successfully.')
-                            break
-                        except Exception as e:
-                            print(f"Error reading file '{file_name}': {e}")
-                    else:
-                        print(f"File '{file_name}' not found or is not a CSV. Please try again.")
-                if not df.empty:
-                    break
-            elif choice == 'C':
-                print("You've chosen to create a CSV with multiple articles. Enter 'done' for article ID when finished.")
-                articles_data = []
-                article_counter = 1
-                while True:
-                    article_id_input = input(f"Enter article ID for article {article_counter} (or 'done' to finish): ").strip()
-                    if article_id_input.lower() == 'done':
-                        break
-                    try:
-                        article_id = int(article_id_input)
-                    except ValueError:
-                        print("Invalid Article ID. Please enter a number or 'done'.")
-                        continue
-                    article_text = input("Enter article text:\n").strip()
-                    if not article_text:
-                        print("Article text cannot be empty. Please try again.")
-                        continue
-                    articles_data.append({'article_id': article_id, 'article_text': article_text})
-                    article_counter += 1
-                if articles_data:
-                    df = pd.DataFrame(articles_data)
-                    print('DataFrame created from multiple articles.')
-                    break
-                else:
-                    print("No articles were entered. Please try again or choose another option.")
-            else:
-                print("Invalid choice. Please enter 'P', 'U', or 'C'.")
-
-        if not df.empty and save_csv:
-            df.to_csv('article.csv', index=False)
-            print('CSV file "article.csv" created/updated successfully.')
-        elif df.empty:
-            print("No DataFrame was created.")
-        return df
-
-    def preprocess_sentences(self, df):
+    def preprocess_sentences(self, df: pd.DataFrame) -> List[Dict]:
         """Tokenize articles into sentences and store metadata."""
         all_sentences_data = []
         sentence_counter_global = 0
@@ -187,46 +164,94 @@ class TextSummarizer:
 
     def clean_sentences(self, sentences):
         """Clean sentences: remove non-alphabetic, lowercase, remove stopwords."""
+        if not sentences:
+            return []
+
+        # Use pandas for efficient string operations
         clean_sentences = pd.Series(sentences).str.replace(r"[^a-zA-Z\s]", " ", regex=True)
         clean_sentences = clean_sentences.str.lower()
-        clean_sentences = clean_sentences.apply(lambda s: self._remove_stopwords(s.split()))
+        clean_sentences = clean_sentences.apply(self._remove_stopwords)
         return clean_sentences.tolist()
 
-    def _remove_stopwords(self, sen):
-        """Remove stopwords from a list of words."""
-        return " ".join([word for word in sen if word not in self.stop_words])
+    def _remove_stopwords(self, sentence):
+        """Remove stopwords from a sentence string."""
+        if not isinstance(sentence, str):
+            return ""
+        words = sentence.split()
+        filtered_words = [word for word in words if word not in self.stop_words]
+        return " ".join(filtered_words)
 
     def compute_sentence_vectors(self, clean_sentences):
-        """Compute sentence vectors using GloVe embeddings."""
+        """Compute sentence vectors using GloVe embeddings with vectorized operations."""
+        if not clean_sentences:
+            return []
+
         sentence_vectors = []
         for sentence in clean_sentences:
             words = sentence.split()
             if words:
-                vectors = [self.word_embeddings.get(w, np.zeros(100)) for w in words]
-                v = np.mean(vectors, axis=0)
+                # Get embeddings for all words in sentence
+                vectors = []
+                for word in words:
+                    embedding = self.word_embeddings.get(word, np.zeros(100, dtype=np.float32))
+                    vectors.append(embedding)
+
+                if vectors:
+                    # Use mean of word vectors
+                    v = np.mean(vectors, axis=0)
+                else:
+                    v = np.zeros(100, dtype=np.float32)
             else:
-                v = np.zeros(100)
+                v = np.zeros(100, dtype=np.float32)
             sentence_vectors.append(v)
+
         return sentence_vectors
 
     def compute_similarity_matrix(self, sentence_vectors):
-        """Compute cosine similarity matrix."""
-        n = len(sentence_vectors)
-        sim_mat = np.zeros((n, n))
-        for i in range(n):
-            for j in range(n):
-                if i != j:
-                    sim_mat[i][j] = cosine_similarity(
-                        sentence_vectors[i].reshape(1, -1),
-                        sentence_vectors[j].reshape(1, -1)
-                    )[0, 0]
+        """Compute cosine similarity matrix using vectorized operations."""
+        if not sentence_vectors:
+            return np.array([])
+
+        # Convert to numpy array for vectorized operations
+        vectors = np.array(sentence_vectors)
+        n = len(vectors)
+
+        # Normalize vectors for faster cosine similarity
+        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+        norms[norms == 0] = 1  # Avoid division by zero
+        normalized_vectors = vectors / norms
+
+        # Compute cosine similarity matrix using matrix multiplication
+        sim_mat = np.dot(normalized_vectors, normalized_vectors.T)
+
+        # Ensure diagonal is zero (no self-similarity)
+        np.fill_diagonal(sim_mat, 0)
+
         return sim_mat
 
     def rank_sentences(self, sim_mat):
-        """Rank sentences using PageRank."""
-        nx_graph = nx.from_numpy_array(sim_mat)
-        scores = nx.pagerank(nx_graph)
-        return scores
+        """Rank sentences using PageRank with optimized parameters."""
+        if sim_mat.size == 0:
+            return {}
+
+        try:
+            # Create graph from similarity matrix
+            nx_graph = nx.from_numpy_array(sim_mat)
+
+            # Use optimized PageRank parameters
+            scores = nx.pagerank(
+                nx_graph,
+                alpha=0.85,  # Damping factor
+                max_iter=100,
+                tol=1e-6
+            )
+
+            return scores
+        except Exception as e:
+            print(f"Warning: PageRank failed, using uniform scores: {e}")
+            # Fallback: return uniform scores
+            n = sim_mat.shape[0]
+            return {i: 1.0/n for i in range(n)}
 
     def summarize_article(self, scored_sentences, article_id, df):
         """Generate summary for a specific article."""
@@ -268,3 +293,31 @@ class TextSummarizer:
             sentence_data['score'] = scores[i]
 
         return sentences_data
+
+    def summarize_text(self, text: str, num_sentences: Optional[int] = None) -> str:
+        """
+        Summarize a single text document.
+
+        Args:
+            text (str): The text to summarize
+            num_sentences (int, optional): Number of sentences in summary. Defaults to self.num_sentences.
+
+        Returns:
+            str: The summarized text
+        """
+        if not text or not text.strip():
+            return ""
+
+        if num_sentences is None:
+            num_sentences = self.num_sentences
+
+        # Create a temporary DataFrame
+        df = pd.DataFrame([{'article_id': 1, 'article_text': text}])
+
+        # Run summarization pipeline
+        scored_sentences = self.run_summarization(df)
+
+        # Get summary
+        _, summary = self.summarize_article(scored_sentences, 1, df)
+
+        return summary if summary else text

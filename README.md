@@ -72,20 +72,20 @@ text-summarizer-gui
 
 ```python
 from text_summarizer import TextSummarizer
-import pandas as pd
 
-# Initialize summarizer
-summarizer = TextSummarizer(glove_path='glove.6B.100d.txt')
+# Initialize summarizer (automatic GloVe download)
+summarizer = TextSummarizer(num_sentences=3)
 
-# Load data
-df = pd.DataFrame([{'article_id': 1, 'article_text': 'Your text here...'}])
-
-# Run summarization
-scored_sentences = summarizer.run_summarization(df)
-
-# Get summary for article ID 1
-article_text, summary = summarizer.summarize_article(scored_sentences, 1, df)
+# Simple text summarization
+text = "Your long text here..."
+summary = summarizer.summarize_text(text)
 print(summary)
+
+# Advanced usage with DataFrame
+import pandas as pd
+df = pd.DataFrame([{'article_id': 1, 'article_text': text}])
+scored_sentences = summarizer.run_summarization(df)
+article_text, summary = summarizer.summarize_article(scored_sentences, 1, df)
 ```
 
 ## Data Format
