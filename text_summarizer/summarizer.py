@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import nltk
 import os
+import requests
+import zipfile
+from pathlib import Path
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 from sklearn.metrics.pairwise import cosine_similarity
@@ -14,24 +17,89 @@ import networkx as nx
 class TextSummarizer:
     """A class for summarizing text documents using GloVe embeddings and PageRank."""
 
-    def __init__(self, glove_path='glove.6B.100d.txt/glove.6B.100d.txt', num_sentences=5):
-        self.glove_path = glove_path
+    def __init__(self, glove_path=None, num_sentences=5):
         self.num_sentences = num_sentences
         self.word_embeddings = {}
         self.stop_words = set(stopwords.words('english'))
+
+        # Set default GloVe path
+        if glove_path is None:
+            glove_path = self._get_default_glove_path()
+
+        self.glove_path = glove_path
         self._load_embeddings()
+
+    def _get_default_glove_path(self):
+        """Get the default path for GloVe embeddings."""
+        # Use user's home directory for data
+        home_dir = Path.home()
+        glove_dir = home_dir / '.text_summarizer'
+        glove_dir.mkdir(exist_ok=True)
+        return glove_dir / 'glove.6B.100d.txt'
+
+    def _download_glove_embeddings(self):
+        """Download GloVe embeddings if not present."""
+        print("GloVe embeddings not found. Downloading from Stanford NLP...")
+
+        # Create directory if it doesn't exist
+        glove_file = Path(self.glove_path)
+        glove_file.parent.mkdir(exist_ok=True)
+
+        # Download the zip file
+        url = "https://nlp.stanford.edu/data/glove.6B.zip"
+        zip_path = glove_file.parent / "glove.6B.zip"
+
+        try:
+            print("Downloading GloVe embeddings (862 MB)...")
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+
+            total_size = int(response.headers.get('content-length', 0))
+            downloaded_size = 0
+
+            with open(zip_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded_size += len(chunk)
+                        if total_size > 0:
+                            progress = (downloaded_size / total_size) * 100
+                            print(".1f", end='', flush=True)
+
+            print("\nDownload complete. Extracting...")
+
+            # Extract the specific file we need
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extract('glove.6B.100d.txt', glove_file.parent)
+
+            # Clean up zip file
+            zip_path.unlink()
+
+            print(f"GloVe embeddings extracted to {self.glove_path}")
+
+        except Exception as e:
+            print(f"Failed to download GloVe embeddings: {e}")
+            print("Please download manually from: https://nlp.stanford.edu/data/glove.6B.zip")
+            raise
 
     def _load_embeddings(self):
         """Load GloVe word embeddings from file."""
+        if not os.path.exists(self.glove_path):
+            self._download_glove_embeddings()
+
         try:
+            print(f"Loading GloVe embeddings from {self.glove_path}...")
             with open(self.glove_path, 'r', encoding='utf-8') as f:
                 for line in f:
                     values = line.split()
                     word = values[0]
                     coefs = np.asarray(values[1:], dtype='float32')
                     self.word_embeddings[word] = coefs
+            print(f"Loaded {len(self.word_embeddings)} word embeddings.")
         except FileNotFoundError:
             raise FileNotFoundError(f"GloVe file not found at {self.glove_path}")
+        except Exception as e:
+            raise Exception(f"Error loading GloVe embeddings: {e}")
 
     def load_data(self):
         """Load data interactively."""

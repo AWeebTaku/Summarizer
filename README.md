@@ -39,14 +39,12 @@ pip install -e .
 
 ### Download GloVe Embeddings
 
-The tool requires GloVe word embeddings. Download the 100d version:
+**No manual download required!** The package will automatically download GloVe embeddings (100d, ~400MB) on first use and cache them in your home directory (`~/.text_summarizer/`).
 
-```bash
-wget http://nlp.stanford.edu/data/glove.6B.zip
-unzip glove.6B.zip
+If you prefer to use your own GloVe file, you can specify the path:
+```python
+summarizer = TextSummarizer(glove_path='path/to/your/glove.6B.100d.txt')
 ```
-
-Place the `glove.6B.100d.txt` file in the project root or specify the path.
 
 ## Usage
 
