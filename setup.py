@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/AWeebTaku/Summarizer",
-    packages=find_packages(),
+    packages=["text_summarizer", "text_summarizer.data"],
     license="MIT",
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -36,7 +36,4 @@ setup(
         ],
     },
     include_package_data=True,
-    package_data={
-        "textsummarizer": ["data/*.csv"],
-    },
 )
