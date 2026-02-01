@@ -132,8 +132,8 @@ If you use this tool in your research, please cite:
 ```
 @software{text_summarizer,
   title = {Text Summarizer},
-  author = {Your Name},
+  author = {Aditya Chaurasiya},
   url = {https://github.com/AWeebTaku/Summarizer},
-  year = {2024}
+  year = {2026}
 }
 ```

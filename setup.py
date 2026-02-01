@@ -9,8 +9,8 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="text-summarizer-aweebtaku",
     version="1.2.1",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Aditya Chaurasiya",
+    author_email="aditya.chaurasiya@example.com",
     description="A text summarization tool using GloVe embeddings and PageRank algorithm",
     long_description=long_description,
     long_description_content_type="text/markdown",
