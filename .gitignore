@@ -113,3 +113,5 @@ dmypy.json
 *.txt
 !data/*.csv
 !glove.6B.100d.txt
+glove.6B.100d.txt.gz
+glove.6B.100d.txt.zip
