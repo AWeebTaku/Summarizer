@@ -9,8 +9,15 @@ def main():
                         help="Number of sentences in summary")
     parser.add_argument("--csv-file", help="Path to CSV file with articles")
     parser.add_argument("--article-id", type=int, help="Article ID to summarize (if CSV provided)")
+    parser.add_argument("--gui", action="store_true", help="Launch graphical user interface")
 
     args = parser.parse_args()
+
+    if args.gui:
+        # Import and run GUI
+        from .ui import main as gui_main
+        gui_main()
+        return
 
     try:
         summarizer = TextSummarizer(glove_path=args.glove_path, num_sentences=args.num_sentences)

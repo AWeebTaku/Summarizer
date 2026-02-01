@@ -60,10 +60,14 @@ text-summarizer-aweebtaku --csv-file data/tennis.csv --article-id 1
 text-summarizer-aweebtaku
 ```
 
-### GUI Interface
+### Graphical User Interface
 
 ```bash
-python -m text_summarizer.ui
+# Launch GUI (easiest way)
+text-summarizer-aweebtaku --gui
+
+# Or use the dedicated GUI command
+text-summarizer-gui
 ```
 
 ### Python API
