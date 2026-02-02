@@ -33,6 +33,7 @@ setup(
         "console_scripts": [
             "text-summarizer-aweebtaku=text_summarizer.cli:main",
             "text-summarizer-gui=text_summarizer.ui:main",
+            "text-summarizer-shortcuts=text_summarizer.create_shortcuts:create_shortcuts",
         ],
     },
     include_package_data=True,

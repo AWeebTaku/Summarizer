@@ -37,6 +37,22 @@ cd Summarizer
 pip install -e .
 ```
 
+### Create Desktop Shortcuts (Windows)
+
+After installation, create desktop shortcuts for easy access:
+
+**Option 1: Automatic (Recommended)**
+```bash
+text-summarizer-shortcuts
+```
+This will create desktop shortcuts for both GUI and CLI versions.
+
+**Option 2: Manual**
+Run the included batch file:
+```cmd
+create_shortcuts.bat
+```
+
 ### Download GloVe Embeddings
 
 **No manual download required!** The package will automatically download GloVe embeddings (100d, ~400MB) on first use and cache them in your home directory (`~/.text_summarizer/`).
@@ -47,6 +63,21 @@ summarizer = TextSummarizer(glove_path='path/to/your/glove.6B.100d.txt')
 ```
 
 ## Usage
+
+### Console Scripts
+
+After installation, you can use these commands from anywhere:
+
+```bash
+# Launch the graphical user interface
+text-summarizer-gui
+
+# Use the command line interface
+text-summarizer-aweebtaku --help
+
+# Create desktop shortcuts (Windows only)
+text-summarizer-shortcuts
+```
 
 ### Command Line Interface
 

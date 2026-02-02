@@ -1,6 +1,7 @@
 include README.md
 include LICENSE
 include requirements.txt
+include create_shortcuts.bat
 recursive-include text_summarizer/data *.csv
 global-exclude *.pyc
 global-exclude __pycache__
