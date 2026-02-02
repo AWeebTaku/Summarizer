@@ -37,6 +37,13 @@ cd Summarizer
 pip install -e .
 ```
 
+### Upgrade Package
+
+To upgrade to the latest version with new features:
+```bash
+pip install --upgrade text-summarizer-aweebtaku
+```
+
 ### Create Desktop Shortcuts (Windows)
 
 After installation, create desktop shortcuts for easy access:
@@ -69,6 +76,9 @@ summarizer = TextSummarizer(glove_path='path/to/your/glove.6B.100d.txt')
 After installation, you can use these commands from anywhere:
 
 ```bash
+# Upgrade to the latest version
+pip install --upgrade text-summarizer-aweebtaku
+
 # Launch the graphical user interface
 text-summarizer-gui
 

@@ -2,14 +2,22 @@ import argparse
 from .summarizer import TextSummarizer
 
 def main():
-    parser = argparse.ArgumentParser(description="Text Summarization Tool")
-    parser.add_argument("--glove-path", default="glove.6B.100d.txt/glove.6B.100d.txt",
-                        help="Path to GloVe embeddings file")
-    parser.add_argument("--num-sentences", type=int, default=5,
-                        help="Number of sentences in summary")
-    parser.add_argument("--csv-file", help="Path to CSV file with articles")
-    parser.add_argument("--article-id", type=int, help="Article ID to summarize (if CSV provided)")
-    parser.add_argument("--gui", action="store_true", help="Launch graphical user interface")
+    parser = argparse.ArgumentParser(
+        description="Text Summarization Tool",
+        epilog="""
+Examples:
+  text-summarizer-aweebtaku --csv-file data.csv --article-id 1
+  text-summarizer-aweebtaku --gui
+
+Desktop Shortcuts (Windows):
+  text-summarizer-shortcuts    # Create desktop shortcuts
+  text-summarizer-gui         # Launch graphical interface
+
+Upgrade:
+  pip install --upgrade text-summarizer-aweebtaku
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
     args = parser.parse_args()
 

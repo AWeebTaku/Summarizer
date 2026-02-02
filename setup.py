@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="text-summarizer-aweebtaku",
-    version="1.2.4",
+    version="1.2.5",
     author="Aditya Chaurasiya",
     author_email="adityachaurasiya57527@gmail.com",
     description="A text summarization tool using GloVe embeddings and PageRank algorithm",
