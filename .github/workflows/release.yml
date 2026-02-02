@@ -34,7 +34,7 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}  # GitHub repository secret for PyPI authentication
       run: |
-        twine upload dist/*
+        twine upload --skip-existing dist/*
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
