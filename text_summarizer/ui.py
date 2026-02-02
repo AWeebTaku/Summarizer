@@ -13,13 +13,10 @@ class TextSummarizerUI:
         self.root.title("Text Summarizer")
         self.root.geometry("1000x700")
         self.root.resizable(True, True)
-        self.root.configure(bg='#f0f0f0')
 
-        # Configure styles
-        style = ttk.Style()
-        style.configure('TButton', font=('Arial', 10))
-        style.configure('TLabel', font=('Arial', 10))
-        style.configure('TFrame', background='#f0f0f0')
+        # Theme management
+        self.dark_mode = False
+        self.apply_theme()
 
         self.summarizer = None
         self.df = None
@@ -28,15 +25,63 @@ class TextSummarizerUI:
 
         self.create_widgets()
 
+    def apply_theme(self):
+        """Apply the current theme (light or dark) to the application."""
+        if self.dark_mode:
+            # Dark theme colors
+            bg_color = '#2b2b2b'
+            fg_color = '#ffffff'
+            text_bg = '#3c3c3c'
+            text_fg = '#ffffff'
+            button_bg = '#404040'
+            frame_bg = '#2b2b2b'
+        else:
+            # Light theme colors
+            bg_color = '#f0f0f0'
+            fg_color = '#000000'
+            text_bg = '#ffffff'
+            text_fg = '#000000'
+            button_bg = '#e1e1e1'
+            frame_bg = '#f0f0f0'
+
+        # Configure root window
+        self.root.configure(bg=bg_color)
+
+        # Configure styles
+        style = ttk.Style()
+        style.configure('TButton', font=('Arial', 10), background=button_bg)
+        style.configure('TLabel', font=('Arial', 10), background=frame_bg, foreground=fg_color)
+        style.configure('TFrame', background=frame_bg)
+        style.configure('TLabelframe', background=frame_bg, foreground=fg_color)
+        style.configure('TLabelframe.Label', background=frame_bg, foreground=fg_color)
+
+        # Update text widget colors if they exist
+        if hasattr(self, 'original_text'):
+            self.original_text.configure(bg=text_bg, fg=text_fg, insertbackground=fg_color)
+        if hasattr(self, 'summary_text'):
+            self.summary_text.configure(bg=text_bg, fg=text_fg, insertbackground=fg_color)
+
+    def toggle_theme(self):
+        """Toggle between light and dark themes."""
+        self.dark_mode = not self.dark_mode
+        self.apply_theme()
+
     def create_widgets(self):
         """Create and layout all UI widgets."""
         # Main frame
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Title
-        title_label = ttk.Label(main_frame, text="Text Summarizer", font=("Arial", 16, "bold"))
-        title_label.pack(pady=10)
+        # Title and theme toggle
+        title_frame = ttk.Frame(main_frame)
+        title_frame.pack(fill=tk.X, pady=10)
+
+        title_label = ttk.Label(title_frame, text="Text Summarizer", font=("Arial", 16, "bold"))
+        title_label.pack(side=tk.LEFT)
+
+        theme_button = ttk.Button(title_frame, text="🌙 Dark Mode" if not self.dark_mode else "☀️ Light Mode",
+                                 command=self.toggle_theme)
+        theme_button.pack(side=tk.RIGHT)
 
         # Data loading section
         load_frame = ttk.LabelFrame(main_frame, text="Load Data", padding="10")
@@ -149,7 +194,7 @@ class TextSummarizerUI:
 
     def paste_single(self):
         """Open dialog to paste a single document."""
-        dialog = PasteDialog(self.root)
+        dialog = PasteDialog(self.root, self.dark_mode)
         self.root.wait_window(dialog.top)
         if dialog.result:
             self.df = pd.DataFrame([{'article_id': 1, 'article_text': dialog.result}])
@@ -173,7 +218,7 @@ class TextSummarizerUI:
 
     def create_csv(self):
         """Open dialog to create a new CSV with multiple documents."""
-        dialog = CreateCSVDialog(self.root)
+        dialog = CreateCSVDialog(self.root, self.dark_mode)
         self.root.wait_window(dialog.top)
         if dialog.result:
             self.df = pd.DataFrame(dialog.result)
@@ -249,7 +294,21 @@ class TextSummarizerUI:
         top.title("Original Document - Full View")
         top.geometry("900x700")
         top.resizable(True, True)
-        text = scrolledtext.ScrolledText(top, wrap=tk.WORD)
+
+        # Apply theme to popup window
+        if self.dark_mode:
+            bg_color = '#2b2b2b'
+            fg_color = '#ffffff'
+            text_bg = '#3c3c3c'
+            text_fg = '#ffffff'
+        else:
+            bg_color = '#f0f0f0'
+            fg_color = '#000000'
+            text_bg = '#ffffff'
+            text_fg = '#000000'
+
+        top.configure(bg=bg_color)
+        text = scrolledtext.ScrolledText(top, wrap=tk.WORD, bg=text_bg, fg=text_fg, insertbackground=fg_color)
         text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         text.insert(tk.END, self.original_text.get(1.0, tk.END))
         text.config(state=tk.DISABLED)  # Make it read-only
@@ -260,7 +319,21 @@ class TextSummarizerUI:
         top.title("Summary - Full View")
         top.geometry("900x700")
         top.resizable(True, True)
-        text = scrolledtext.ScrolledText(top, wrap=tk.WORD)
+
+        # Apply theme to popup window
+        if self.dark_mode:
+            bg_color = '#2b2b2b'
+            fg_color = '#ffffff'
+            text_bg = '#3c3c3c'
+            text_fg = '#ffffff'
+        else:
+            bg_color = '#f0f0f0'
+            fg_color = '#000000'
+            text_bg = '#ffffff'
+            text_fg = '#000000'
+
+        top.configure(bg=bg_color)
+        text = scrolledtext.ScrolledText(top, wrap=tk.WORD, bg=text_bg, fg=text_fg, insertbackground=fg_color)
         text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         text.insert(tk.END, self.summary_text.get(1.0, tk.END))
         text.config(state=tk.DISABLED)  # Make it read-only
@@ -269,16 +342,31 @@ class TextSummarizerUI:
 class PasteDialog:
     """Dialog for pasting a single document."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, dark_mode=False):
         self.top = tk.Toplevel(parent)
         self.top.title("Paste Document")
         self.top.geometry("700x600")
         self.top.transient(parent)
         self.top.grab_set()
         self.result = None
+        self.dark_mode = dark_mode
+
+        # Apply theme
+        if self.dark_mode:
+            bg_color = '#2b2b2b'
+            fg_color = '#ffffff'
+            text_bg = '#3c3c3c'
+            text_fg = '#ffffff'
+        else:
+            bg_color = '#f0f0f0'
+            fg_color = '#000000'
+            text_bg = '#ffffff'
+            text_fg = '#000000'
+
+        self.top.configure(bg=bg_color)
 
         ttk.Label(self.top, text="Paste your document:").pack(pady=5)
-        self.text = scrolledtext.ScrolledText(self.top, wrap=tk.WORD)
+        self.text = scrolledtext.ScrolledText(self.top, wrap=tk.WORD, bg=text_bg, fg=text_fg, insertbackground=fg_color)
         self.text.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
         button_frame = ttk.Frame(self.top)
@@ -297,13 +385,28 @@ class PasteDialog:
 class CreateCSVDialog:
     """Dialog for creating a CSV with multiple documents."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, dark_mode=False):
         self.top = tk.Toplevel(parent)
         self.top.title("Create CSV")
         self.top.geometry("700x600")
         self.top.transient(parent)
         self.top.grab_set()
         self.result = []
+        self.dark_mode = dark_mode
+
+        # Apply theme
+        if self.dark_mode:
+            bg_color = '#2b2b2b'
+            fg_color = '#ffffff'
+            text_bg = '#3c3c3c'
+            text_fg = '#ffffff'
+        else:
+            bg_color = '#f0f0f0'
+            fg_color = '#000000'
+            text_bg = '#ffffff'
+            text_fg = '#000000'
+
+        self.top.configure(bg=bg_color)
 
         self.articles = []
         self.counter = 1
@@ -318,7 +421,7 @@ class CreateCSVDialog:
         self.id_entry.grid(row=0, column=1, padx=5)
 
         ttk.Label(input_frame, text="Document Text:").grid(row=1, column=0, sticky=tk.W)
-        self.text_entry = scrolledtext.ScrolledText(input_frame, wrap=tk.WORD, height=5)
+        self.text_entry = scrolledtext.ScrolledText(input_frame, wrap=tk.WORD, height=5, bg=text_bg, fg=text_fg, insertbackground=fg_color)
         self.text_entry.grid(row=1, column=1, padx=5, pady=5)
 
         button_frame = ttk.Frame(self.top)
@@ -328,7 +431,7 @@ class CreateCSVDialog:
         ttk.Button(button_frame, text="Done", command=self.done).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=self.cancel).pack(side=tk.RIGHT, padx=5)
 
-        self.listbox = tk.Listbox(self.top, height=10)
+        self.listbox = tk.Listbox(self.top, height=10, bg=text_bg, fg=text_fg)
         self.listbox.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
     def add_article(self):
