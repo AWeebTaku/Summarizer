@@ -15,7 +15,7 @@ requirements = [
 
 setup(
     name="text-summarizer-aweebtaku",
-    version="1.2.8.post1",
+    version="1.2.8.post2",
     author="Aditya Chaurasiya",
     author_email="adityachaurasiya57527@gmail.com",
     description="A text summarization tool using GloVe embeddings and PageRank algorithm",

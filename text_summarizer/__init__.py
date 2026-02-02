@@ -1,3 +1,3 @@
 from .summarizer import TextSummarizer
 
-__version__ = "1.2.8.post1"
+__version__ = "1.2.8.post2"
