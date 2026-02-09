@@ -11,8 +11,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import networkx as nx
 
 # Download necessary NLTK data
-# nltk.download('punkt_tab')
-# nltk.download('stopwords')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
 
 class TextSummarizer:
     """A class for summarizing text documents using GloVe embeddings and PageRank."""
