@@ -122,3 +122,10 @@ glove.6B.100d.txt.zip
 # Backup files
 *.backup
 glove.6B.100d.txt.backup/
+
+# Extra files/folders to ignore
+Presentation/
+*.xlsx
+*.docx
+*.pptx
+*.pdf

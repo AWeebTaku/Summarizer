@@ -3,5 +3,6 @@ include LICENSE
 include requirements.txt
 include create_shortcuts.bat
 recursive-include text_summarizer/data *.csv
+recursive-include text_summarizer/glove.6B.100d.txt *.zip
 global-exclude *.pyc
 global-exclude __pycache__

@@ -30,12 +30,32 @@ class TextSummarizer:
         self._load_embeddings()
 
     def _get_default_glove_path(self):
-        """Get the default path for GloVe embeddings."""
-        # Use user's home directory for data
+        """Get the default path for GloVe embeddings.
+        
+        Checks for bundled GloVe file first, then falls back to user's home directory.
+        If bundled zip file exists but not extracted, extracts it to home directory.
+        """
+        # Check for bundled GloVe zip file in package
+        package_glove_zip = Path(__file__).parent / 'glove.6B.100d.txt' / 'glove.6B.zip'
+        
+        # Use user's home directory for extracted data
         home_dir = Path.home()
         glove_dir = home_dir / '.text_summarizer'
         glove_dir.mkdir(exist_ok=True)
-        return glove_dir / 'glove.6B.100d.txt'
+        glove_file = glove_dir / 'glove.6B.100d.txt'
+        
+        # If bundled zip exists but not extracted, extract it
+        if package_glove_zip.exists() and not glove_file.exists():
+            try:
+                print(f"Found bundled GloVe file. Extracting to {glove_dir}...")
+                with zipfile.ZipFile(package_glove_zip, 'r') as zip_ref:
+                    zip_ref.extract('glove.6B.100d.txt', glove_dir)
+                print(f"GloVe file extracted successfully.")
+            except Exception as e:
+                print(f"Warning: Could not extract bundled GloVe file: {e}")
+                # Fall through to download if extraction fails
+        
+        return glove_file
 
     def _download_glove_embeddings(self):
         """Download GloVe embeddings if not present with improved error handling."""
