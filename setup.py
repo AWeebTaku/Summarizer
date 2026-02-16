@@ -15,7 +15,7 @@ requirements = [
 
 setup(
     name="text-summarizer-aweebtaku",
-    version="1.3.0",
+    version="1.3.1",
     author="Aditya Chaurasiya",
     author_email="adityachaurasiya57527@gmail.com",
     description="A text summarization tool using GloVe embeddings and PageRank algorithm",
@@ -23,9 +23,6 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/AWeebTaku/Summarizer",
     packages=["text_summarizer", "text_summarizer.data"],
-    package_data={
-        "text_summarizer": ["glove.6B.100d.txt/*.zip"],
-    },
     license="MIT",
     classifiers=[
         "Development Status :: 4 - Beta",
