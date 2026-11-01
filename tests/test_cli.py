@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from text_summarizer import cli, engine
+from text_summarizer import __version__, cli, engine
 from tests.test_core import DOC, fake_embed
 
 
@@ -88,7 +88,7 @@ def test_ai_needs_a_key(capsys, monkeypatch):
 def test_version_and_help(capsys):
     with pytest.raises(SystemExit) as e:
         cli.main(["--version"])
-    assert e.value.code == 0 and "summarize 2.0.0" in capsys.readouterr().out
+    assert e.value.code == 0 and f"summarize {__version__}" in capsys.readouterr().out
     with pytest.raises(SystemExit):
         cli.main(["--help"])
     assert "examples:" in capsys.readouterr().out

@@ -43,7 +43,8 @@ Changelog = "https://github.com/AWeebTaku/Summarizer/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 desktop = ["fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9", "pywebview>=5"]
-build = ["text-summarizer-aweebtaku[desktop]", "pyinstaller>=6"]
+qt = ["pywebview[qt]>=5"]
+build = ["text-summarizer-aweebtaku[desktop]", "pywebview[qt]>=5; sys_platform == 'linux'", "pyinstaller>=6"]
 ai = ["anthropic>=0.40"]
 dev = ["pytest", "httpx"]
 
