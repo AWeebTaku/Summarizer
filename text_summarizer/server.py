@@ -1,6 +1,7 @@
-"""FastAPI app: JSON API + static UI. Used by the web deploy and the desktop window."""
+"""FastAPI app: the JSON API and the UI that the desktop window (or, as a fallback, your browser) shows."""
 import tempfile
 import threading
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -28,8 +29,10 @@ class ExportBody(BaseModel):
     docs: list[ExportDoc]
 
 
-def create_app():
+def create_app(browser: bool = False):
     app = FastAPI(title="Summarizer")
+    app.state.browser = browser    # True when the UI is in a browser tab instead of the native window
+    app.state.last_ping = 0.0      # in browser mode the page pings us, so the app can quit when the tab closes
     model = {"ready": False, "error": None}  # lets the UI explain the first-run download
 
     def warm():
@@ -91,13 +94,18 @@ def create_app():
         try:
             return ai.rewrite(sentences, bullets)
         except ImportError:
-            raise HTTPException(503, "AI rewrite needs: pip install 'text-summarizer-aweebtaku[ai]'")
+            raise HTTPException(503, "AI rewrite needs the anthropic package: pip install anthropic")
         except Exception as e:  # anthropic.APIError and friends: keep the extractive result usable
             raise HTTPException(502, f"AI rewrite failed: {type(e).__name__}")
 
     @app.get("/api/config")
     def config():
-        return {"ai": ai.available(), **model}
+        return {"ai": ai.available(), "browser": app.state.browser, **model}
+
+    @app.post("/api/ping")
+    def ping():
+        app.state.last_ping = time.time()
+        return {"ok": True}
 
     @app.post("/api/export/docx")
     def export_docx(body: ExportBody):

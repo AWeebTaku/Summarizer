@@ -1,4 +1,4 @@
-"""The ``summarize`` command (also ``python -m text_summarizer``)."""
+"""The command line: python -m text_summarizer FILE_OR_URL ..."""
 import argparse
 import json
 import os
@@ -8,13 +8,13 @@ from . import __version__, engine, ingest
 
 EXAMPLES = """\
 examples:
-  summarize report.pdf                       summarize a file (pdf, docx, txt, md, csv)
-  summarize report.pdf -n 5 -f bullets       five bullet points
-  summarize a.pdf b.docx -r 0.1 -o out.md -f markdown
-  summarize https://example.com/article      a web page
-  summarize data.csv -c body                 one summary per row, text in column "body"
-  cat essay.txt | summarize -k               from stdin, with keywords
-  summarize report.pdf -f json | jq .        machine-readable output
+  python -m text_summarizer report.pdf                       summarize a file (pdf, docx, txt, md, csv)
+  python -m text_summarizer report.pdf -n 5 -f bullets       five bullet points
+  python -m text_summarizer a.pdf b.docx -r 0.1 -o out.md -f markdown
+  python -m text_summarizer https://example.com/article      a web page
+  python -m text_summarizer data.csv -c body                 one summary per row, text in column "body"
+  cat essay.txt | python -m text_summarizer -k               from stdin, with keywords
+  python -m text_summarizer report.pdf -f json | jq .        machine-readable output
 
 exit status: 0 on success, 1 if any source failed, 2 for bad arguments.
 """
@@ -42,7 +42,7 @@ def _count(value):
 
 def build_parser():
     ap = argparse.ArgumentParser(
-        prog="summarize", description="Summarize text, files (txt, md, pdf, docx, csv) and web pages.",
+        prog="python -m text_summarizer", description="Summarize text, files (txt, md, pdf, docx, csv) and web pages.",
         epilog=EXAMPLES, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("sources", nargs="*", metavar="source",
                     help="file path, web page URL or raw text; '-' or no argument reads stdin")
@@ -56,8 +56,8 @@ def build_parser():
     ap.add_argument("-c", "--column", metavar="NAME", help="CSV column holding the text (default: article_text, else the first)")
     ap.add_argument("-o", "--output", metavar="FILE", help="write the result to FILE instead of stdout")
     ap.add_argument("--ai", action="store_true",
-                    help="rewrite the chosen sentences as fluent prose with Claude (needs ANTHROPIC_API_KEY and the [ai] extra)")
-    ap.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
+                    help="rewrite the chosen sentences as fluent prose with Claude (needs ANTHROPIC_API_KEY and: pip install anthropic)")
+    ap.add_argument("-V", "--version", action="version", version=f"Summarizer {__version__}")
     return ap
 
 
@@ -100,7 +100,7 @@ def main(argv=None):
     if args.ai:
         from . import ai
         if not ai.available():
-            print("summarize: error: --ai needs ANTHROPIC_API_KEY to be set", file=sys.stderr)
+            print("summarizer: error: --ai needs ANTHROPIC_API_KEY to be set", file=sys.stderr)
             return 1
 
     results, failed = [], False
@@ -110,23 +110,23 @@ def main(argv=None):
             for name, text in docs:
                 s = engine.summarize(text, n=args.sentences, ratio=args.ratio)
                 if not s:
-                    print(f"summarize: warning: {name}: no sentences found (a scanned PDF has no text layer)", file=sys.stderr)
+                    print(f"summarizer: warning: {name}: no sentences found (a scanned PDF has no text layer)", file=sys.stderr)
                     continue
                 ai_text = None
                 if args.ai:
                     ai_text = ai.rewrite(s.sentences, bullets=args.format in ("bullets", "markdown"))
                     if ai_text is None:
-                        print(f"summarize: warning: {name}: the model declined, showing the extractive summary", file=sys.stderr)
+                        print(f"summarizer: warning: {name}: the model declined, showing the extractive summary", file=sys.stderr)
                 results.append((name, s, ai_text))
         except (ValueError, OSError) as e:  # includes FileNotFoundError and unreadable files
             label = source if len(source) < 60 and "\n" not in source else "input"
-            print(f"summarize: error: {e}" if isinstance(e, FileNotFoundError) else f"summarize: error: {label}: {e}", file=sys.stderr)
+            print(f"summarizer: error: {e}" if isinstance(e, FileNotFoundError) else f"summarizer: error: {label}: {e}", file=sys.stderr)
             failed = True
         except ImportError:
-            print("summarize: error: --ai needs: pip install 'text-summarizer-aweebtaku[ai]'", file=sys.stderr)
+            print("summarizer: error: --ai needs the anthropic package: pip install anthropic", file=sys.stderr)
             return 1
         except Exception as e:  # e.g. an API error from --ai
-            print(f"summarize: error: {type(e).__name__}: {e}", file=sys.stderr)
+            print(f"summarizer: error: {type(e).__name__}: {e}", file=sys.stderr)
             failed = True
 
     if results:
@@ -141,7 +141,7 @@ def main(argv=None):
         except BrokenPipeError:  # e.g. `summarize big.pdf | head`
             os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
         except OSError as e:
-            print(f"summarize: error: could not write {args.output}: {e}", file=sys.stderr)
+            print(f"summarizer: error: could not write {args.output}: {e}", file=sys.stderr)
             return 1
     return 1 if failed else 0
 

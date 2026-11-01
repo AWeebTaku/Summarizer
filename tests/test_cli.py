@@ -88,7 +88,7 @@ def test_ai_needs_a_key(capsys, monkeypatch):
 def test_version_and_help(capsys):
     with pytest.raises(SystemExit) as e:
         cli.main(["--version"])
-    assert e.value.code == 0 and f"summarize {__version__}" in capsys.readouterr().out
+    assert e.value.code == 0 and f"Summarizer {__version__}" in capsys.readouterr().out
     with pytest.raises(SystemExit):
         cli.main(["--help"])
     assert "examples:" in capsys.readouterr().out

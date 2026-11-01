@@ -12,5 +12,5 @@
 from .engine import Summary, summarize, summarize_file, summarize_many, warm_up
 from .ingest import load
 
-__version__ = "2.0.1"
+__version__ = "2.0.0"
 __all__ = ["Summary", "summarize", "summarize_file", "summarize_many", "load", "warm_up", "__version__"]

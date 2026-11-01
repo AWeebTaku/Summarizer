@@ -43,7 +43,7 @@ def test_ai_off_by_default_and_rewrite(monkeypatch):
     monkeypatch.setattr(server.engine, "embed", fake_embed)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     cfg = c.get("/api/config").json()
-    assert cfg["ai"] is False and set(cfg) == {"ai", "ready", "error"}
+    assert cfg["ai"] is False and set(cfg) == {"ai", "browser", "ready", "error"}
     assert c.post("/api/summarize", data={"text": DOC, "n": 2, "use_ai": "true"}).status_code == 503
     monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
     monkeypatch.setattr(server.ai, "rewrite", lambda sents, bullets=False: "Fluent: " + sents[0])
@@ -68,3 +68,11 @@ def test_conflicting_length_options_are_a_422(monkeypatch):
 
 def test_damaged_pdf_is_a_422_not_a_500():
     assert c.post("/api/summarize", files={"file": ("bad.pdf", b"not a pdf")}).status_code == 422
+
+
+def test_ping_records_that_the_page_is_alive():
+    app = server.create_app()
+    client = TestClient(app)
+    assert app.state.last_ping == 0
+    assert client.post("/api/ping").json() == {"ok": True}
+    assert app.state.last_ping > 0

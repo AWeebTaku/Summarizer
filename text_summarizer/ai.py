@@ -1,4 +1,4 @@
-"""Optional abstractive rewrite with Claude. Needs `pip install text-summarizer-aweebtaku[ai]` and ANTHROPIC_API_KEY."""
+"""Optional abstractive rewrite with Claude. Needs the anthropic package (pip install anthropic) and ANTHROPIC_API_KEY."""
 import os
 
 MODEL = os.environ.get("SUMMARIZER_MODEL", "claude-opus-5-5")

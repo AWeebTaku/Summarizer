@@ -357,6 +357,13 @@ let modelReady = true;
   }
 })();
 
+/* browser mode: tell the app we are still here, so it quits when this tab is closed */
+fetch('api/config').then(r => r.json()).then(c => {
+  if (!c.browser) return;
+  const beat = () => fetch('api/ping', { method: 'POST' }).catch(() => {});
+  beat(); setInterval(beat, 5000);
+}).catch(() => {});
+
 /* submit */
 async function submit(e) {
   e && e.preventDefault();
