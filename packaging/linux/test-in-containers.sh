@@ -14,9 +14,9 @@ missing=$(find /opt/summarizer -type f \( -name "*.so" -o -name "*.so.*" -o -nam
 if [ -n "$missing" ]; then echo "MISSING LIBRARIES:"; echo "$missing"; fi
 summarizer-app --selftest'
 
-try() {  # name, image, install command
+try() {  # name, image, install command, [extra command to run afterwards]
   echo "::group::$1"
-  if docker run --rm -v "$REL:/r:ro" "$2" sh -c "$3 && $CHECK"; then echo "PASS: $1"; else echo "FAIL: $1"; FAILED+=("$1"); fi
+  if docker run --rm -v "$REL:/r:ro" "$2" sh -c "$3 && $CHECK${4:+ && $4}"; then echo "PASS: $1"; else echo "FAIL: $1"; FAILED+=("$1"); fi
   echo "::endgroup::"
 }
 
@@ -24,7 +24,11 @@ try "Ubuntu 22.04 (.deb)"  ubuntu:22.04     'apt-get update -qq && apt-get insta
 try "Ubuntu 24.04 (.deb)"  ubuntu:24.04     'apt-get update -qq && apt-get install -y -qq /r/Summarizer-amd64.deb >/dev/null'
 try "Debian 12 (.deb)"     debian:12        'apt-get update -qq && apt-get install -y -qq /r/Summarizer-amd64.deb >/dev/null'
 try "Fedora (.rpm)"        fedora:latest    'dnf install -y -q /r/Summarizer-x86_64.rpm >/dev/null'
-try "Arch (.pkg.tar.zst)"  archlinux:latest 'pacman -Sy --noconfirm >/dev/null 2>&1 && pacman -U --noconfirm /r/Summarizer-x86_64.pkg.tar.zst >/dev/null 2>&1'
+# Arch always has the newest Mesa, so it also runs the app under a virtual X server. With a display set, Qt
+# initialises GLX through the system's graphics driver, which is how a libstdc++ mismatch between the bundle and a
+# newer distribution showed up ("Could not initialize GLX").
+try "Arch (.pkg.tar.zst)"  archlinux:latest 'pacman -Sy --noconfirm >/dev/null 2>&1 && pacman -U --noconfirm /r/Summarizer-x86_64.pkg.tar.zst >/dev/null 2>&1' \
+  'pacman -S --noconfirm xorg-server-xvfb xorg-xauth >/dev/null 2>&1; xvfb-run -a summarizer-app --selftest'
 
 echo
 if [ ${#FAILED[@]} -gt 0 ]; then echo "FAILED: ${FAILED[*]}"; exit 1; fi

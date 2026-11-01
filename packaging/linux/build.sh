@@ -21,6 +21,10 @@ fi
 
 # The graphics stack has to match the machine's drivers, so use the system's libgbm, not the build machine's copy.
 rm -f dist/Summarizer/_internal/libgbm.so* dist/Summarizer/_internal/libwayland-server.so*
+# Likewise the C++ runtime. The build machine (Ubuntu 22.04) has an old libstdc++; carrying it breaks the graphics
+# drivers of newer distributions, which are built against a newer one ("Could not initialize GLX" at startup).
+# libstdc++ and libgcc_s are backwards compatible, so the system's copy is always safe to use.
+rm -f dist/Summarizer/_internal/libstdc++.so* dist/Summarizer/_internal/libgcc_s.so*
 
 mkdir -p release
 export VERSION

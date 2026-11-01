@@ -116,8 +116,9 @@ jobs:
       shell: pwsh
       run: |
         dotnet tool install --global wix --version ${{ env.WIX_VERSION }}
-        & "$env:USERPROFILE\.dotnet\tools\wix.exe" build packaging\windows\summarizer.wxs -arch x64 -d Version=${{ steps.v.outputs.version }} -d BundleDir="$PWD\dist\Summarizer" -d IconFile="$PWD\packaging\icons\icon.ico" -o release\Summarizer.msi
+        & "$env:USERPROFILE\.dotnet\tools\wix.exe" build packaging\windows\summarizer.wxs -arch x64 -d Version=${{ steps.v.outputs.version }} -d BundleDir="$PWD\dist\Summarizer" -d IconFile="$PWD\packaging\icons\icon.ico" -pdbtype none -o release\Summarizer.msi
         if ($LASTEXITCODE -ne 0) { throw "wix build failed" }
+        Remove-Item release\*.wixpdb -ErrorAction SilentlyContinue
     - name: Install the setup.exe for the current user, run the self-test, uninstall
       shell: pwsh
       run: |
