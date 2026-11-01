@@ -74,13 +74,7 @@ jobs:
         APPIMAGE_EXTRACT_AND_RUN=1 release/Summarizer-x86_64.AppImage --selftest
         QT_QPA_PLATFORM=xcb APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a release/Summarizer-x86_64.AppImage --selftest
     - name: Install each package in a clean distribution and run the self-test
-      run: |
-        set -e
-        run() { docker run --rm -v "$PWD/release:/r:ro" "$1" sh -c "$2"; }
-        run ubuntu:22.04    'apt-get update -qq && apt-get install -y -qq /r/Summarizer-amd64.deb >/dev/null && summarizer-app --selftest'
-        run ubuntu:24.04    'apt-get update -qq && apt-get install -y -qq /r/Summarizer-amd64.deb >/dev/null && summarizer-app --selftest'
-        run fedora:latest   'dnf install -y -q /r/Summarizer-x86_64.rpm >/dev/null && summarizer-app --selftest'
-        run archlinux:latest 'pacman -Sy --noconfirm >/dev/null 2>&1 && pacman -U --noconfirm /r/Summarizer-x86_64.pkg.tar.zst >/dev/null 2>&1 && summarizer-app --selftest'
+      run: packaging/linux/test-in-containers.sh
     - uses: actions/upload-artifact@v4
       with:
         name: installers-linux
@@ -118,7 +112,7 @@ jobs:
       shell: pwsh
       run: |
         dotnet tool install --global wix --version ${{ env.WIX_VERSION }}
-        & "$env:USERPROFILE\.dotnet\tools\wix.exe" build packaging\windows\summarizer.wxs -arch x64 -d Version=${{ steps.v.outputs.version }} -d BundleDir="$PWD\dist\Summarizer" -o release\Summarizer.msi
+        & "$env:USERPROFILE\.dotnet\tools\wix.exe" build packaging\windows\summarizer.wxs -arch x64 -d Version=${{ steps.v.outputs.version }} -d BundleDir="$PWD\dist\Summarizer" -d IconFile="$PWD\packaging\icons\icon.ico" -o release\Summarizer.msi
         if ($LASTEXITCODE -ne 0) { throw "wix build failed" }
     - name: Install the setup.exe for the current user, run the self-test, uninstall
       shell: pwsh

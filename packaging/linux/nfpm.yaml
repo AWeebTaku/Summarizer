@@ -45,21 +45,24 @@ scripts:
 
 # Everything else (Qt, NSS, X11 helper libraries, ...) is inside the bundle. Only the graphics and
 # display libraries are left to the system, because they have to match the machine's drivers.
+# (libgbm and libwayland-server are removed from the bundle in build.sh for the same reason.)
 overrides:
   deb:
-    depends: [libgl1, libegl1, libxcb1, libdrm2, libwayland-client0, libwayland-cursor0, libwayland-egl1, libxcb-dri3-0]
+    depends: [libgl1, libegl1, libgbm1, libxcb1, libdrm2, libwayland-client0, libwayland-cursor0, libwayland-egl1, libwayland-server0, libxcb-dri3-0]
   rpm:
     depends:
       - libGL.so.1()(64bit)
       - libEGL.so.1()(64bit)
+      - libgbm.so.1()(64bit)
       - libxcb.so.1()(64bit)
       - libdrm.so.2()(64bit)
       - libwayland-client.so.0()(64bit)
       - libwayland-cursor.so.0()(64bit)
       - libwayland-egl.so.1()(64bit)
+      - libwayland-server.so.0()(64bit)
       - libxcb-dri3.so.0()(64bit)
   archlinux:
-    depends: [libglvnd, libxcb, libdrm, wayland]
+    depends: [libglvnd, mesa, libxcb, libdrm, wayland]
 
 # zstd: fast to build and read by every distribution this targets (Ubuntu 22.04+, Debian 12+, Fedora, openSUSE 15.4+)
 deb:

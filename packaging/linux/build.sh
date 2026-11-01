@@ -19,6 +19,9 @@ if [ -d "$Q" ]; then
         "$Q"/lib/libQt6QuickTemplates2* "$Q"/lib/libQt6QuickLayouts* "$Q"/lib/libQt6ShaderTools* 2>/dev/null || true
 fi
 
+# The graphics stack has to match the machine's drivers, so use the system's libgbm, not the build machine's copy.
+rm -f dist/Summarizer/_internal/libgbm.so* dist/Summarizer/_internal/libwayland-server.so*
+
 mkdir -p release
 export VERSION
 "$NFPM" package -f packaging/linux/nfpm.yaml -p deb       -t release/Summarizer-amd64.deb

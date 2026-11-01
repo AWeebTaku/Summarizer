@@ -38,7 +38,7 @@ Things worth knowing:
   - *Windows:* in SmartScreen choose **More info, then Run anyway**.
   - *macOS:* open the disk image and drag Summarizer to Applications. On macOS 14 and earlier, right-click it and choose **Open**. On macOS 15 and later, try to open it once, then go to **System Settings, Privacy & Security** and choose **Open Anyway**. If macOS says the app is damaged, run `xattr -dr com.apple.quarantine /Applications/Summarizer.app`.
 - **The macOS build is for Apple Silicon only.** Intel Macs can run the app from the pip install below.
-- **Linux builds need glibc 2.35 or newer**: Ubuntu 22.04, Debian 12, Fedora 36 and later. They include their own browser engine (Qt WebEngine), so nothing else needs installing. Running an AppImage on Ubuntu 22.04 or newer needs `libfuse2` (`sudo apt install libfuse2`).
+- **Linux builds need glibc 2.35 or newer**: Ubuntu 22.04, Debian 12, Fedora 36 and later. They include their own browser engine (Qt WebEngine). The `.deb`, `.rpm` and Arch packages make your package manager fetch the few graphics libraries they need, and an AppImage expects the usual desktop graphics libraries (Mesa, which every desktop has). Running an AppImage on Ubuntu 22.04 or newer needs `libfuse2` (`sudo apt install libfuse2`).
 - **The downloads are large** (about 260 MB on Linux) because each one carries the app's own copy of its libraries.
 - The first summary downloads the language model once (about 130 MB) to `~/.cache/summarizer` (override with `SUMMARIZER_CACHE`). After that it works offline.
 - Each release includes `SHA256SUMS.txt`. Check a download with `sha256sum -c SHA256SUMS.txt --ignore-missing`.
