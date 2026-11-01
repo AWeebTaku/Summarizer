@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.1
+
+### Fixed
+- **The Linux desktop app could not open a window.** The 2.0.0 Linux download was built without a GUI toolkit and could not find the system's GTK, so it failed at startup on every machine. Linux builds now carry their own Qt WebEngine.
+- A damaged PDF or Word file uploaded in the app is reported as a normal error instead of a server error.
+
+### Added
+- **Real installers** instead of zipped folders: `Summarizer-setup.exe` (per user) and `Summarizer.msi` for Windows, a `.dmg` for macOS, and `.deb`, `.rpm`, `.pkg.tar.zst` and `.AppImage` for Linux. Each release also lists SHA-256 checksums.
+- An app icon, and `summarizer-desktop --selftest`, which the release build uses to install and start every installer before anything is published.
+- A `qt` extra for pip installs on Linux: `pip install "text-summarizer-aweebtaku[desktop,qt]"`.
+
+### Changed
+- Releases are published to PyPI only after every installer has built and passed its tests.
+
 ## 2.0.0
 
 A ground-up rewrite. **This release breaks the 1.x API and removes the old GUI.**

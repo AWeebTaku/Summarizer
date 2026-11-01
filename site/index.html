@@ -132,6 +132,9 @@ h2{margin:0 0 40px;font-size:clamp(1.9rem,3.6vw,2.9rem);line-height:1.08;letter-
 .file{font:500 .85rem var(--mono);color:var(--mute);margin-left:4px}
 .row2{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
 .all{margin:18px 0 0;font-size:.92rem;color:var(--mute)}
+.alt-dl{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.note2{margin:18px 0 0!important;font-size:.9rem;max-width:62ch!important}
+.note2 code{font:.85rem var(--mono);background:var(--panel-2);border-radius:6px;padding:1px 6px}
 @media(max-width:520px){.dl{padding:22px}.os button{padding:0 10px}.os button .t{font-size:.9rem}}
 
 /* install */
@@ -249,20 +252,27 @@ footer a:hover{color:var(--ink)}
         </div>
         <div class="pane" id="pane-Windows" role="tabpanel" aria-labelledby="tab-Windows" hidden>
           <h3>Windows 10 and 11</h3>
-          <p>Unzip the file and run Summarizer.exe. If SmartScreen warns you, choose More info, then Run anyway.</p>
-          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-Windows.zip"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for Windows</a><span class="file">Summarizer-Windows.zip</span></div>
+          <p>Run the installer. It installs for your user, so it needs no admin rights. Windows may warn because the app isn't signed yet: choose More info, then Run anyway.</p>
+          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-setup.exe"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for Windows</a><span class="file">Summarizer-setup.exe</span></div>
+          <div class="alt-dl"><a class="btn ghost sm" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer.msi">Installer for all users (.msi)</a></div>
         </div>
         <div class="pane" id="pane-macOS" role="tabpanel" aria-labelledby="tab-macOS" hidden>
           <h3>macOS</h3>
-          <p>Unpack the file. The first time, right-click Summarizer.app and choose Open, because the app is not signed yet.</p>
-          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-macOS.tar.gz"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for macOS</a><span class="file">Summarizer-macOS.tar.gz</span></div>
+          <p>Open the disk image and drag Summarizer to Applications. The app isn't signed yet, so the first time use right-click, Open (macOS 14 and earlier) or System Settings, Privacy and Security, Open Anyway (macOS 15 and later). Apple Silicon Macs only.</p>
+          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-macOS-arm64.dmg"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for macOS</a><span class="file">Summarizer-macOS-arm64.dmg</span></div>
         </div>
         <div class="pane" id="pane-Linux" role="tabpanel" aria-labelledby="tab-Linux" hidden>
           <h3>Linux</h3>
-          <p>Install GTK and WebKit first (python3-gi and gir1.2-webkit2-4.1 on Debian and Ubuntu). Then run ./Summarizer/Summarizer.</p>
-          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-Linux.tar.gz"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for Linux</a><span class="file">Summarizer-Linux.tar.gz</span></div>
+          <p>The AppImage runs on any distribution. If you prefer your package manager, pick the package for your system. Each one includes everything it needs.</p>
+          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-x86_64.AppImage"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for Linux</a><span class="file">Summarizer-x86_64.AppImage</span></div>
+          <div class="alt-dl">
+            <a class="btn ghost sm" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-amd64.deb">Debian, Ubuntu, Mint (.deb)</a>
+            <a class="btn ghost sm" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-x86_64.rpm">Fedora, openSUSE (.rpm)</a>
+            <a class="btn ghost sm" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-x86_64.pkg.tar.zst">Arch, Manjaro (.pkg.tar.zst)</a>
+          </div>
+          <p class="note2">Needs glibc 2.35 or newer, which means Ubuntu 22.04, Debian 12, Fedora 36 and later. Ubuntu 22.04 and newer need <code>libfuse2</code> to run an AppImage.</p>
         </div>
-        <p class="all">Every file and the release notes are on the <a href="https://github.com/AWeebTaku/Summarizer/releases/latest">releases page</a>.</p>
+        <p class="all">Other formats, checksums and the release notes are on the <a href="https://github.com/AWeebTaku/Summarizer/releases/latest">releases page</a>.</p>
       </div>
     </div>
   </div>
@@ -415,7 +425,7 @@ for name, summary in summarize_file("report.pdf", ratio=0.2):
   });
   pick(guess || 'Windows');
   if (guess) {
-    const a = document.getElementById('hero-dl'), link = document.querySelector('#pane-' + guess + ' a.btn');
+    const a = document.getElementById('hero-dl'), link = document.querySelector('#pane-' + guess + ' a.btn.primary');
     a.href = link.href; document.getElementById('hero-t').textContent = 'Download for ' + guess;
     document.getElementById('hero-ic').innerHTML = document.querySelector('[data-os="' + guess + '"] .ic').innerHTML;
   } else document.getElementById('hero-dl').href = '#download';
