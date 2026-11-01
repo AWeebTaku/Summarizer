@@ -111,10 +111,23 @@ def _run_window(url: str) -> bool:
         return False
 
 
+def _restore_library_path():
+    """A frozen Linux app has LD_LIBRARY_PATH pointing at its bundled libraries, and every program it starts inherits
+    that. The browser would then load our (older) OpenSSL, libstdc++ and Qt instead of its own and can crash.
+    PyInstaller keeps the original value in LD_LIBRARY_PATH_ORIG."""
+    if getattr(sys, "frozen", False) and sys.platform.startswith("linux"):
+        original = os.environ.pop("LD_LIBRARY_PATH_ORIG", "")
+        if original:
+            os.environ["LD_LIBRARY_PATH"] = original
+        else:
+            os.environ.pop("LD_LIBRARY_PATH", None)
+
+
 def _run_browser(app, url: str):
     """Open the browser and keep serving until its tab is closed (the page pings us every few seconds)."""
     app.state.browser = True  # tells the page to send its heartbeat
     _say(f"Summarizer is running at {url}\nClose the browser tab to quit, or press Ctrl+C.")
+    _restore_library_path()  # the browser must not inherit our bundled libraries
     webbrowser.open(url)
     started = time.time()
     try:

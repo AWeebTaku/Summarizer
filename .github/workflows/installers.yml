@@ -173,7 +173,7 @@ jobs:
       run: |
         hdiutil attach -nobrowse -mountpoint /tmp/summarizer-dmg release/Summarizer-macOS-arm64.dmg
         /tmp/summarizer-dmg/Summarizer.app/Contents/MacOS/Summarizer --selftest
-        hdiutil detach /tmp/summarizer-dmg
+        hdiutil detach /tmp/summarizer-dmg || { sleep 5; hdiutil detach -force /tmp/summarizer-dmg; }  # macOS can report 'Resource busy' right after a mount
     - uses: actions/upload-artifact@v4
       with:
         name: installers-macos

@@ -9,8 +9,9 @@ REL="$PWD/release"
 FAILED=()
 
 # runs inside the container, after the package is installed
-CHECK='export LD_LIBRARY_PATH=/opt/summarizer/_internal:/opt/summarizer/_internal/PyQt6/Qt6/lib
-missing=$(find /opt/summarizer -type f \( -name "*.so" -o -name "*.so.*" -o -name QtWebEngineProcess \) -exec ldd {} + 2>/dev/null | grep "not found" | sort -u)
+# (LD_LIBRARY_PATH is set for the ldd scan only: exported, it would also break pacman, dnf and apt, which would load
+# the bundled OpenSSL instead of the system's)
+CHECK='missing=$(find /opt/summarizer -type f \( -name "*.so" -o -name "*.so.*" -o -name QtWebEngineProcess \) -exec env LD_LIBRARY_PATH=/opt/summarizer/_internal:/opt/summarizer/_internal/PyQt6/Qt6/lib ldd {} + 2>/dev/null | grep "not found" | sort -u)'
 if [ -n "$missing" ]; then echo "MISSING LIBRARIES:"; echo "$missing"; fi
 summarizer-app --selftest'
 
