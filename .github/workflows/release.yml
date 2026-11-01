@@ -1,10 +1,22 @@
 name: Release
+# Pushing a tag like v2.0.0 publishes to PyPI and attaches desktop builds to a GitHub release.
+# To (re)build only the desktop apps for an existing tag without touching PyPI, run this workflow
+# by hand from the Actions tab and enter the tag.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build desktop apps for (for example v2.0.0). Does not publish to PyPI.'
+        required: true
+
+permissions:
+  contents: read
 
 jobs:
   pypi:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -21,11 +33,14 @@ jobs:
 
   desktop:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.tag || github.ref }}
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'
@@ -43,14 +58,31 @@ jobs:
           text_summarizer/desktop.py
       env:
         PATHSEP: ${{ runner.os == 'Windows' && ';' || ':' }}
-    - name: Archive (tar keeps the executable bit on macOS/Linux)
+    - name: Archive (tar keeps the executable bit on macOS and Linux)
       if: runner.os != 'Windows'
       run: tar -czf Summarizer-${{ runner.os }}.tar.gz -C dist .
     - name: Archive
       if: runner.os == 'Windows'
       run: Compress-Archive -Path dist\* -DestinationPath Summarizer-${{ runner.os }}.zip
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Summarizer-${{ runner.os }}
+        path: Summarizer-${{ runner.os }}.*
+        if-no-files-found: error
+
+  # One job creates the release, so the three builds don't race each other. It is the only job that can write.
+  release:
+    needs: desktop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: assets
+        merge-multiple: true
     - uses: softprops/action-gh-release@v2
       with:
-        files: |
-          Summarizer-${{ runner.os }}.tar.gz
-          Summarizer-${{ runner.os }}.zip
+        tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+        files: assets/*
+        generate_release_notes: true
