@@ -1,21 +1,27 @@
 name: Release
-# Pushing a tag like v2.0.0 publishes to PyPI and attaches desktop builds to a GitHub release.
-# To (re)build only the desktop apps for an existing tag without touching PyPI, run this workflow
-# by hand from the Actions tab and enter the tag.
+# Pushing a tag like v2.0.1 builds and tests every installer, then publishes to PyPI and creates the GitHub release.
+# To rebuild only the installers for an existing tag (no PyPI), run this workflow by hand and enter the tag.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to build desktop apps for (for example v2.0.0). Does not publish to PyPI.'
+        description: 'Existing tag to attach installers to (for example v2.0.1). Does not publish to PyPI.'
         required: true
 
 permissions:
   contents: read
 
 jobs:
+  installers:
+    uses: ./.github/workflows/installers.yml
+    with:
+      ref: ${{ github.event.inputs.tag || github.ref }}
+
+  # PyPI never lets a version number be reused, so it only runs once every installer has built and passed.
   pypi:
+    needs: installers
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -31,58 +37,25 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: twine upload --skip-existing dist/*
 
-  desktop:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  release:
+    needs: installers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # the only job that can write to the repository
     steps:
     - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.tag || github.ref }}
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - name: Linux GUI libraries
-      if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install -y python3-gi gir1.2-webkit2-4.1 libgirepository1.0-dev libcairo2-dev pkg-config
-    - run: pip install -e ".[build]"
-    - name: Build
-      shell: bash
-      run: |
-        pyinstaller --noconfirm --name Summarizer --windowed --onedir \
-          --collect-all fastembed --collect-all onnxruntime --collect-all pysbd \
-          --collect-all trafilatura --collect-all justext --collect-all courlan --collect-all htmldate \
-          --add-data "text_summarizer/static${PATHSEP:-:}text_summarizer/static" \
-          text_summarizer/desktop.py
-      env:
-        PATHSEP: ${{ runner.os == 'Windows' && ';' || ':' }}
-    - name: Archive (tar keeps the executable bit on macOS and Linux)
-      if: runner.os != 'Windows'
-      run: tar -czf Summarizer-${{ runner.os }}.tar.gz -C dist .
-    - name: Archive
-      if: runner.os == 'Windows'
-      run: Compress-Archive -Path dist\* -DestinationPath Summarizer-${{ runner.os }}.zip
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Summarizer-${{ runner.os }}
-        path: Summarizer-${{ runner.os }}.*
-        if-no-files-found: error
-
-  # One job creates the release, so the three builds don't race each other. It is the only job that can write.
-  release:
-    needs: desktop
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
     - uses: actions/download-artifact@v4
       with:
+        pattern: installers-*
         path: assets
         merge-multiple: true
+    - name: Checksums
+      run: cd assets && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
     - uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.event.inputs.tag || github.ref_name }}
         files: assets/*
+        body_path: .github/release-body.md
         generate_release_notes: true

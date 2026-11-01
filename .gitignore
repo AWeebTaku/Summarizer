@@ -144,3 +144,6 @@ desktop.ini
 
 # Claude Code session file
 .claude_session
+
+# installer build output
+release/

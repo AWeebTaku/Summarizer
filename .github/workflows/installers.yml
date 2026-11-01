@@ -1,0 +1,180 @@
+name: Build installers
+# Builds every download (Windows .exe and .msi, macOS .dmg, Linux .deb .rpm .pkg.tar.zst .AppImage), then
+# installs each one and runs the app's self-test before anything is published.
+#
+# Run it by hand from the Actions tab (or: gh workflow run installers.yml) to try the installers without
+# making a release. release.yml calls it for real releases.
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref to build (a tag, for releases)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  # Pinned tools, verified against the checksums published with each release.
+  NFPM_VERSION: '2.48.0'
+  NFPM_SHA256: '6d7f9a28b2f397934403950fcbba83f598b08d02edbe79a0815b3b4897341750'
+  APPIMAGETOOL_VERSION: '1.9.1'
+  APPIMAGETOOL_SHA256: 'ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0'
+  WIX_VERSION: '5.0.2'
+
+jobs:
+  linux:
+    # Built on 22.04 so the app runs on distributions back to glibc 2.35 (Ubuntu 22.04, Debian 12, Fedora 36).
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Read the version
+      id: v
+      run: echo "version=$(python -c "import re,pathlib;print(re.search(r'__version__ = \"([^\"]+)\"', pathlib.Path('text_summarizer/__init__.py').read_text()).group(1))")" >> "$GITHUB_OUTPUT"
+    # Qt WebEngine ships inside the app. PyInstaller copies the helper libraries it finds on THIS machine into
+    # the bundle, so they must be installed here (a missing one would only show up on users' desktops).
+    - name: Install libraries to bundle, and a virtual display for testing
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq xvfb libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+          libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 \
+          libxcb-xinerama0 libxcb-xkb1 libxcb-glx0 libxkbcommon0 libxkbcommon-x11-0 libxkbfile1 libx11-xcb1 \
+          libnss3 libnspr4 libasound2 libcups2 libdbus-1-3 libfontconfig1 libfreetype6 libgbm1 libglib2.0-0 \
+          libharfbuzz0b libxcomposite1 libxdamage1 libxrandr2 libxtst6 libxi6 libxext6 libxfixes3 libxrender1 \
+          libegl1 libgl1 libdrm2 libwayland-client0 libwayland-cursor0 libwayland-egl1 libxcb-dri3-0
+    - run: pip install -e ".[build]"
+    - name: Freeze the app
+      run: python packaging/build_bundle.py
+    - name: Self-test the frozen app (off-screen, then on a real X server)
+      run: |
+        dist/Summarizer/Summarizer --selftest
+        QT_QPA_PLATFORM=xcb xvfb-run -a dist/Summarizer/Summarizer --selftest
+    - name: Fetch packaging tools
+      run: |
+        mkdir -p "$HOME/tools" && cd "$HOME/tools"
+        curl -sSfL -o nfpm.tgz "https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}/nfpm_${NFPM_VERSION}_Linux_x86_64.tar.gz"
+        echo "${NFPM_SHA256}  nfpm.tgz" | sha256sum -c -
+        tar -xzf nfpm.tgz nfpm
+        curl -sSfL -o appimagetool "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-x86_64.AppImage"
+        echo "${APPIMAGETOOL_SHA256}  appimagetool" | sha256sum -c -
+        chmod +x nfpm appimagetool
+    - name: Build .deb, .rpm, .pkg.tar.zst and .AppImage
+      env:
+        VERSION: ${{ steps.v.outputs.version }}
+      run: NFPM="$HOME/tools/nfpm" APPIMAGETOOL="$HOME/tools/appimagetool" packaging/linux/build.sh
+    - name: Test the AppImage (off-screen, then on a real X server)
+      run: |
+        APPIMAGE_EXTRACT_AND_RUN=1 release/Summarizer-x86_64.AppImage --selftest
+        QT_QPA_PLATFORM=xcb APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a release/Summarizer-x86_64.AppImage --selftest
+    - name: Install each package in a clean distribution and run the self-test
+      run: |
+        set -e
+        run() { docker run --rm -v "$PWD/release:/r:ro" "$1" sh -c "$2"; }
+        run ubuntu:22.04    'apt-get update -qq && apt-get install -y -qq /r/Summarizer-amd64.deb >/dev/null && summarizer-app --selftest'
+        run ubuntu:24.04    'apt-get update -qq && apt-get install -y -qq /r/Summarizer-amd64.deb >/dev/null && summarizer-app --selftest'
+        run fedora:latest   'dnf install -y -q /r/Summarizer-x86_64.rpm >/dev/null && summarizer-app --selftest'
+        run archlinux:latest 'pacman -Sy --noconfirm >/dev/null 2>&1 && pacman -U --noconfirm /r/Summarizer-x86_64.pkg.tar.zst >/dev/null 2>&1 && summarizer-app --selftest'
+    - uses: actions/upload-artifact@v4
+      with:
+        name: installers-linux
+        path: release/*
+        if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Read the version
+      id: v
+      shell: bash
+      run: echo "version=$(python -c "import re,pathlib;print(re.search(r'__version__ = \"([^\"]+)\"', pathlib.Path('text_summarizer/__init__.py').read_text()).group(1))")" >> "$GITHUB_OUTPUT"
+    - run: pip install -e ".[build]"
+    - name: Freeze the app
+      run: python packaging/build_bundle.py
+    - name: Self-test the frozen app
+      shell: pwsh
+      run: |
+        $p = Start-Process dist\Summarizer\Summarizer.exe -ArgumentList '--selftest' -Wait -PassThru
+        if ($p.ExitCode -ne 0) { throw "selftest exited with $($p.ExitCode)" }
+    - name: Build the setup.exe (Inno Setup)
+      shell: pwsh
+      run: |
+        choco install innosetup -y --no-progress
+        & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DVersion=${{ steps.v.outputs.version }}" packaging\windows\summarizer.iss
+        if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+    - name: Build the .msi (WiX)
+      shell: pwsh
+      run: |
+        dotnet tool install --global wix --version ${{ env.WIX_VERSION }}
+        & "$env:USERPROFILE\.dotnet\tools\wix.exe" build packaging\windows\summarizer.wxs -arch x64 -d Version=${{ steps.v.outputs.version }} -d BundleDir="$PWD\dist\Summarizer" -o release\Summarizer.msi
+        if ($LASTEXITCODE -ne 0) { throw "wix build failed" }
+    - name: Install the setup.exe for the current user, run the self-test, uninstall
+      shell: pwsh
+      run: |
+        $i = Start-Process release\Summarizer-setup.exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CURRENTUSER' -Wait -PassThru
+        if ($i.ExitCode -ne 0) { throw "setup.exe exited with $($i.ExitCode)" }
+        $dir = Join-Path $env:LOCALAPPDATA 'Programs\Summarizer'
+        $t = Start-Process "$dir\Summarizer.exe" -ArgumentList '--selftest' -Wait -PassThru
+        if ($t.ExitCode -ne 0) { throw "installed app selftest exited with $($t.ExitCode)" }
+        Start-Process "$dir\unins000.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES' -Wait
+        # the uninstaller hands off to a temporary copy of itself, so wait until the files are really gone
+        for ($n = 0; $n -lt 60 -and (Test-Path "$dir\Summarizer.exe"); $n++) { Start-Sleep -Seconds 1 }
+        if (Test-Path "$dir\Summarizer.exe") { throw "uninstall left the app behind" }
+    - name: Install the .msi, run the self-test, uninstall
+      shell: pwsh
+      run: |
+        $i = Start-Process msiexec.exe -ArgumentList '/i',"$PWD\release\Summarizer.msi",'/qn','/norestart','/l*v',"$PWD\msi-install.log" -Wait -PassThru
+        if ($i.ExitCode -ne 0) { Get-Content msi-install.log -Tail 40; throw "msi install exited with $($i.ExitCode)" }
+        $exe = "$env:ProgramFiles\Summarizer\Summarizer.exe"
+        $t = Start-Process $exe -ArgumentList '--selftest' -Wait -PassThru
+        if ($t.ExitCode -ne 0) { throw "installed app selftest exited with $($t.ExitCode)" }
+        $u = Start-Process msiexec.exe -ArgumentList '/x',"$PWD\release\Summarizer.msi",'/qn','/norestart' -Wait -PassThru
+        if ($u.ExitCode -ne 0) { throw "msi uninstall exited with $($u.ExitCode)" }
+    - uses: actions/upload-artifact@v4
+      with:
+        name: installers-windows
+        path: release/*
+        if-no-files-found: error
+
+  macos:
+    runs-on: macos-latest   # Apple Silicon
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - run: pip install -e ".[build]"
+    - name: Freeze the app
+      run: python packaging/build_bundle.py
+    - name: Self-test the frozen app
+      run: dist/Summarizer.app/Contents/MacOS/Summarizer --selftest
+    - name: Build the .dmg
+      run: |
+        mkdir -p release dmgroot
+        cp -R dist/Summarizer.app dmgroot/
+        ln -s /Applications dmgroot/Applications
+        hdiutil create -volname "Summarizer" -srcfolder dmgroot -ov -format UDZO release/Summarizer-macOS-arm64.dmg
+    - name: Mount the .dmg and self-test the app inside it
+      run: |
+        hdiutil attach -nobrowse -mountpoint /tmp/summarizer-dmg release/Summarizer-macOS-arm64.dmg
+        /tmp/summarizer-dmg/Summarizer.app/Contents/MacOS/Summarizer --selftest
+        hdiutil detach /tmp/summarizer-dmg
+    - uses: actions/upload-artifact@v4
+      with:
+        name: installers-macos
+        path: release/*
+        if-no-files-found: error
