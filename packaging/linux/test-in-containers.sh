@@ -27,8 +27,8 @@ try "Fedora (.rpm)"        fedora:latest    'dnf install -y -q /r/Summarizer-x86
 # Arch always has the newest Mesa, so it also runs the app under a virtual X server. With a display set, Qt
 # initialises GLX through the system's graphics driver, which is how a libstdc++ mismatch between the bundle and a
 # newer distribution showed up ("Could not initialize GLX").
-try "Arch (.pkg.tar.zst)"  archlinux:latest 'pacman -Sy --noconfirm >/dev/null 2>&1 && pacman -U --noconfirm /r/Summarizer-x86_64.pkg.tar.zst >/dev/null 2>&1' \
-  'pacman -S --noconfirm xorg-server-xvfb xorg-xauth >/dev/null 2>&1; xvfb-run -a summarizer-app --selftest'
+try "Arch (.pkg.tar.zst)"  archlinux:latest 'pacman -Sy --noconfirm >/dev/null 2>&1 && pacman -U --noconfirm /r/Summarizer-x86_64.pkg.tar.zst 2>&1 | tail -3' \
+  'pacman -Syu --noconfirm xorg-server-xvfb xorg-xauth 2>&1 | tail -5 && xvfb-run -a summarizer-app --selftest'
 
 echo
 if [ ${#FAILED[@]} -gt 0 ]; then echo "FAILED: ${FAILED[*]}"; exit 1; fi
