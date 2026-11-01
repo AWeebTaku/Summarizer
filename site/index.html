@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20256%20256%22%20fill%3D%22%237ba9ff%22%3E%3Cpath%20d%3D%22M32%2C64a8%2C8%2C0%2C0%2C1%2C8-8H216a8%2C8%2C0%2C0%2C1%2C0%2C16H40A8%2C8%2C0%2C0%2C1%2C32%2C64Zm8%2C48H168a8%2C8%2C0%2C0%2C0%2C0-16H40a8%2C8%2C0%2C0%2C0%2C0%2C16Zm176%2C24H40a8%2C8%2C0%2C0%2C0%2C0%2C16H216a8%2C8%2C0%2C0%2C0%2C0-16Zm-48%2C40H40a8%2C8%2C0%2C0%2C0%2C0%2C16H168a8%2C8%2C0%2C0%2C0%2C0-16Z%22/%3E%3C/svg%3E">
+<title>Summarizer</title>
+<meta name="description" content="A free desktop app that picks the key sentences from any document. It runs offline and never invents facts.">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+@font-face{font-family:"Geist";src:url(fonts/Geist-Variable.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Geist Mono";src:url(fonts/GeistMono-Variable.woff2) format("woff2");font-weight:100 900;font-display:swap}
+
+/* One theme: AMOLED black with one blue accent. Radius rule: 10px for buttons and chips, 18px for panels. */
+:root{
+  color-scheme:dark;
+  --bg:#000;--panel:#07080c;--panel-2:#0d0f15;
+  --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.18);
+  --ink:#ededf0;--mute:#9a9dab;
+  --blue:#2b67f0;--blue-ink:#fff;--blue-text:#7ba9ff;--blue-soft:rgba(43,103,240,.14);
+  --r:10px;--r-lg:18px;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--blue-text)}
+button{font:inherit;color:inherit;cursor:pointer}
+.ic{display:inline-grid;place-items:center;width:1.2em;height:1.2em;flex:none}
+.ic svg{width:100%;height:100%}
+:focus-visible{outline:2px solid var(--blue-text);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:48px;padding:0 22px;border-radius:var(--r);border:1px solid transparent;font-weight:600;text-decoration:none;white-space:nowrap;transition:filter .2s,border-color .2s,background .2s,transform .15s var(--ease)}
+.btn:active{transform:translateY(1px) scale(.985)}
+.btn.primary{background:var(--blue);color:var(--blue-ink)}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn.ghost{background:none;border-color:var(--line-2);color:var(--ink);font-weight:500}
+.btn.ghost:hover{border-color:var(--blue-text);background:var(--blue-soft)}
+.btn.sm{height:38px;padding:0 16px;font-size:.92rem}
+
+/* nav */
+nav{position:sticky;top:0;z-index:20;height:64px;background:rgba(0,0,0,.72);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+nav .wrap{height:100%;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:650;font-size:1.1rem;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.links{display:flex;align-items:center;gap:26px}
+.links a:not(.btn){color:var(--mute);text-decoration:none;font-size:.95rem;transition:color .2s}
+.links a:not(.btn):hover{color:var(--ink)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;min-height:calc(100dvh - 64px);display:grid;align-items:center;padding:56px 0 64px}
+.gridfx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse 80% 75% at 50% 45%,#000 35%,transparent 100%);mask-image:radial-gradient(ellipse 80% 75% at 50% 45%,#000 35%,transparent 100%)}
+.hero-in{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:48px;align-items:center}
+@media(min-width:960px){.hero-in{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:48px}}
+h1{margin:0 0 20px;font-size:clamp(2.3rem,4.1vw,3.6rem);line-height:1.04;letter-spacing:-.04em;font-weight:620}
+h1 em{font-style:normal;color:var(--blue-text)}
+.lead{margin:0 0 32px;font-size:1.22rem;color:var(--mute);max-width:34ch;line-height:1.55}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+
+/* typing demo */
+.demo{position:relative;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;background:rgba(5,7,12,.8);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 90px rgba(30,80,230,.14);transition:opacity .5s}
+.demo.fade{opacity:0}
+.doc{position:relative;min-height:236px;font-size:.98rem;line-height:1.75;color:#aeb2c0}
+.s{transition:color .4s,background-color .4s,opacity .4s;border-radius:4px;padding:1px 0}
+.s.kept{color:#fff;background:rgba(43,103,240,.34);box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:1px 3px;margin:0 -3px}
+.s.dim{opacity:.32}
+.caret{display:inline-block;width:2px;height:1.05em;margin-left:1px;vertical-align:-.15em;background:var(--blue-text);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.sweep{position:absolute;left:-6px;right:-6px;top:0;height:2px;opacity:0;background:linear-gradient(90deg,transparent,var(--blue-text),transparent);box-shadow:0 0 18px rgba(123,169,255,.45)}
+.result{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);min-height:150px;opacity:0;transform:translateY(14px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.result.show{opacity:1;transform:none}
+.result .meta{font:500 .78rem var(--mono);color:var(--blue-text);margin-bottom:8px}
+.result p{margin:0;color:var(--ink);font-size:.98rem;line-height:1.7}
+@media(prefers-reduced-transparency:reduce){.demo{background:#05070c;-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+/* sections */
+section.block{padding:112px 0}
+h2{margin:0 0 40px;font-size:clamp(1.9rem,3.6vw,2.9rem);line-height:1.08;letter-spacing:-.035em;font-weight:620;max-width:20ch}
+.reveal{opacity:1;transform:none}
+.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease) var(--d,0s),transform .7s var(--ease) var(--d,0s)}
+.js .reveal.in{opacity:1;transform:none}
+
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.cell{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;display:flex;flex-direction:column;gap:10px;isolation:isolate}
+.cell h3{margin:0;font-size:1.25rem;letter-spacing:-.02em;font-weight:600}
+.cell p{margin:0;color:var(--mute);max-width:44ch}
+.a{grid-column:span 4;background:radial-gradient(120% 140% at 0% 0%,rgba(43,103,240,.28),transparent 60%),var(--panel);min-height:250px;justify-content:flex-end}
+.b{grid-column:span 2;min-height:250px;justify-content:flex-end}
+.c{grid-column:span 3;padding-bottom:0}
+.d{grid-column:span 3;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:32px 32px;background-position:-1px -1px;background-color:var(--panel)}
+.badge{display:grid;place-items:center;width:52px;height:52px;border-radius:var(--r);background:var(--blue-soft);color:var(--blue-text);font-size:1.7rem;border:1px solid rgba(123,169,255,.25);margin-bottom:auto}
+.c .shot{position:relative;margin:14px -28px 0;height:250px;overflow:hidden;border-top:1px solid var(--line)}
+.c .shot img{position:absolute;top:-58px;left:-82%;width:182%;max-width:none;height:auto;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;background:rgba(0,0,0,.7);border:1px solid var(--line-2);border-radius:var(--r);font-size:.92rem;color:var(--ink)}
+.chip .ic{color:var(--blue-text)}
+@media(max-width:820px){.bento{grid-template-columns:minmax(0,1fr)}.a,.b,.c,.d{grid-column:auto;min-height:0}.a,.b{min-height:220px}}
+/* spotlight: blue light follows the pointer across the card and its border */
+.spot::before,.spot::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s}
+.spot::before{z-index:-1;background:radial-gradient(380px circle at var(--mx,50%) var(--my,50%),rgba(43,103,240,.2),transparent 62%)}
+.spot::after{border:1px solid transparent;background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(123,169,255,.9),transparent 62%) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0)}
+.spot:hover::before,.spot:hover::after{opacity:1}
+
+/* how it works */
+.how{list-style:none;margin:0;padding:0}
+.how li{display:grid;grid-template-columns:minmax(0,1fr);gap:6px 48px;padding:30px 0;border-top:1px solid var(--line);transition:background .3s}
+.how li:last-child{border-bottom:1px solid var(--line)}
+.how h3{margin:0;font-size:clamp(2rem,5vw,3.6rem);line-height:1;letter-spacing:-.04em;font-weight:620;color:#5b5f6e;transition:color .35s,transform .45s var(--ease)}
+.how p{margin:0;color:var(--mute);max-width:52ch;align-self:center}
+.how li:hover h3,.how li:focus-within h3{color:var(--blue-text);transform:translateX(10px)}
+.how li:hover{background:linear-gradient(90deg,var(--blue-soft),transparent 60%)}
+@media(min-width:820px){.how li{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center}}
+.note{margin:28px 0 0;color:var(--mute);max-width:60ch}
+
+/* download */
+.dl{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--panel);padding:36px}
+.dl .gridfx{-webkit-mask-image:radial-gradient(ellipse 90% 90% at 70% 40%,#000 20%,transparent 100%);mask-image:radial-gradient(ellipse 90% 90% at 70% 40%,#000 20%,transparent 100%)}
+.dl-in{position:relative}
+.os{display:inline-grid;grid-auto-flow:column;gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r);margin-bottom:28px;max-width:100%}
+.os button{display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;background:none;border:0;border-radius:8px;color:var(--mute);font-weight:500;transition:color .2s,background .2s}
+.os button:hover{color:var(--ink)}
+.os button[aria-selected=true]{background:var(--blue-soft);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(123,169,255,.4)}
+.pane h3{margin:0 0 8px;font-size:1.5rem;letter-spacing:-.025em;font-weight:600}
+.pane p{margin:0 0 22px;color:var(--mute);max-width:56ch}
+.file{font:500 .85rem var(--mono);color:var(--mute);margin-left:4px}
+.row2{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+.all{margin:18px 0 0;font-size:.92rem;color:var(--mute)}
+@media(max-width:520px){.dl{padding:22px}.os button{padding:0 10px}.os button .t{font-size:.9rem}}
+
+/* install */
+.term{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:8px;font:.92rem/1.5 var(--mono);overflow:hidden}
+.term + .term{margin-top:12px}
+.cmd{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r)}
+.cmd:hover{background:var(--panel-2)}
+.cmd code{overflow-x:auto;white-space:pre;color:var(--ink);scrollbar-width:none}
+.cmd code::before{content:"$ ";color:var(--blue-text)}
+.cmd.py code::before{content:""}
+.cmd .cp{display:grid;place-items:center;width:36px;height:36px;flex:none;background:none;border:1px solid transparent;border-radius:8px;color:var(--mute);font-size:1.1rem;opacity:.7;transition:opacity .2s,color .2s,border-color .2s}
+.cmd:hover .cp,.cmd .cp:focus-visible{opacity:1}
+.cmd .cp:hover{color:var(--ink);border-color:var(--line-2)}
+.cm{padding:8px 14px 2px;color:#6f7385;font-size:.85rem}
+.sub{margin:-16px 0 28px;color:var(--mute);max-width:56ch}
+
+footer{border-top:1px solid var(--line);padding:32px 0 56px;color:var(--mute);font-size:.92rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between}
+footer a{color:var(--mute);text-decoration:none;margin-right:22px}
+footer a:hover{color:var(--ink)}
+
+@media(max-width:700px){.links a:not(.btn){display:none}.links{gap:12px}section.block{padding:80px 0}.demo{padding:16px}.lead{font-size:1.1rem}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}.js .reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">Summarizer</a>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/AWeebTaku/Summarizer">GitHub</a>
+      <a class="btn primary sm" href="#download">Download</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <canvas class="gridfx" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <div>
+      <h1>Skim the document, <em>keep the facts.</em></h1>
+      <p class="lead">A free desktop app that picks the key sentences from any document. It runs offline and never invents facts.</p>
+      <div class="cta">
+        <a class="btn primary" id="hero-dl" href="https://github.com/AWeebTaku/Summarizer/releases/latest"><span class="ic" id="hero-ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span><span id="hero-t">Download</span></a>
+        <a class="btn ghost" href="#install">Install with pip</a>
+      </div>
+    </div>
+    <div class="demo" id="demo" aria-hidden="true">
+      <div class="doc" id="doc"><div class="sweep" id="sweep"></div></div>
+      <div class="result" id="result"><div class="meta" id="meta"></div><p id="sum"></p></div>
+    </div>
+    <p class="sr">Animation: a document is typed out, then the key sentences are highlighted and collected into a short summary.</p>
+  </div>
+</header>
+
+<section class="block" id="why">
+  <div class="wrap">
+    <h2 class="reveal">Made for people who read a lot</h2>
+    <div class="bento">
+      <article class="cell a spot reveal">
+        <span class="badge"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg></span>
+        <h3>Stays on your computer</h3>
+        <p>Your documents are never uploaded. No account, no tracking, and it works offline after the first run.</p>
+      </article>
+      <article class="cell b spot reveal" style="--d:.08s">
+        <span class="badge"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M100,56H40A16,16,0,0,0,24,72v64a16,16,0,0,0,16,16h60v8a32,32,0,0,1-32,32,8,8,0,0,0,0,16,48.05,48.05,0,0,0,48-48V72A16,16,0,0,0,100,56Zm0,80H40V72h60ZM216,56H156a16,16,0,0,0-16,16v64a16,16,0,0,0,16,16h60v8a32,32,0,0,1-32,32,8,8,0,0,0,0,16,48.05,48.05,0,0,0,48-48V72A16,16,0,0,0,216,56Zm0,80H156V72h60Z"/></svg></span>
+        <h3>Only your own sentences</h3>
+        <p>Summaries are picked from the source, so they can't contain a fact the document doesn't.</p>
+      </article>
+      <article class="cell c spot reveal" style="--d:.04s">
+        <h3>See what was kept</h3>
+        <p>Highlight the chosen sentences in the original text and check them against the source.</p>
+        <div class="shot"><img src="app-dark.png" width="1200" height="760" loading="lazy" alt="The Summarizer app showing a three-sentence summary with the chosen sentences highlighted in the original text."></div>
+      </article>
+      <article class="cell d spot reveal" style="--d:.12s">
+        <h3>Reads what you have</h3>
+        <p>Paste text, drop a file or add a link. A CSV gives you one summary per row.</p>
+        <div class="chips">
+          <span class="chip"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,152a8,8,0,0,1-8,8H192v16h16a8,8,0,0,1,0,16H192v16a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8h32A8,8,0,0,1,224,152ZM92,172a28,28,0,0,1-28,28H56v8a8,8,0,0,1-16,0V152a8,8,0,0,1,8-8H64A28,28,0,0,1,92,172Zm-16,0a12,12,0,0,0-12-12H56v24h8A12,12,0,0,0,76,172Zm88,8a36,36,0,0,1-36,36H112a8,8,0,0,1-8-8V152a8,8,0,0,1,8-8h16A36,36,0,0,1,164,180Zm-16,0a20,20,0,0,0-20-20h-8v40h8A20,20,0,0,0,148,180ZM40,112V40A16,16,0,0,1,56,24h96a8,8,0,0,1,5.66,2.34l56,56A8,8,0,0,1,216,88v24a8,8,0,0,1-16,0V96H152a8,8,0,0,1-8-8V40H56v72a8,8,0,0,1-16,0ZM160,80h28.69L160,51.31Z"/></svg></span>PDF</span>
+          <span class="chip"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M52,144H36a8,8,0,0,0-8,8v56a8,8,0,0,0,8,8H52a36,36,0,0,0,0-72Zm0,56H44V160h8a20,20,0,0,1,0,40Zm169.53-4.91a8,8,0,0,1,.25,11.31A30.06,30.06,0,0,1,200,216c-17.65,0-32-16.15-32-36s14.35-36,32-36a30.06,30.06,0,0,1,21.78,9.6,8,8,0,0,1-11.56,11.06A14.24,14.24,0,0,0,200,160c-8.82,0-16,9-16,20s7.18,20,16,20a14.24,14.24,0,0,0,10.22-4.66A8,8,0,0,1,221.53,195.09ZM128,144c-17.65,0-32,16.15-32,36s14.35,36,32,36,32-16.15,32-36S145.65,144,128,144Zm0,56c-8.82,0-16-9-16-20s7.18-20,16-20,16,9,16,20S136.82,200,128,200ZM48,120a8,8,0,0,0,8-8V40h88V88a8,8,0,0,0,8,8h48v16a8,8,0,0,0,16,0V88a8,8,0,0,0-2.34-5.66l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40v72A8,8,0,0,0,48,120ZM160,51.31,188.69,80H160Z"/></svg></span>Word</span>
+          <span class="chip"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg></span>Text and Markdown</span>
+          <span class="chip"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M48,180c0,11,7.18,20,16,20a14.24,14.24,0,0,0,10.22-4.66A8,8,0,0,1,85.78,206.4,30.06,30.06,0,0,1,64,216c-17.65,0-32-16.15-32-36s14.35-36,32-36a30.06,30.06,0,0,1,21.78,9.6,8,8,0,0,1-11.56,11.06A14.24,14.24,0,0,0,64,160C55.18,160,48,169,48,180Zm79.6-8.69c-4-1.16-8.14-2.35-10.45-3.84-1.25-.81-1.23-1-1.12-1.9a4.57,4.57,0,0,1,2-3.67c4.6-3.12,15.34-1.73,19.82-.56A8,8,0,0,0,142,145.86c-2.12-.55-21-5.22-32.84,2.76a20.58,20.58,0,0,0-9,14.95c-2,15.88,13.65,20.41,23,23.11,12.06,3.49,13.12,4.92,12.78,7.59-.31,2.41-1.26,3.34-2.14,3.93-4.6,3.06-15.17,1.56-19.55.36A8,8,0,0,0,109.94,214a61.34,61.34,0,0,0,15.19,2c5.82,0,12.3-1,17.49-4.46a20.82,20.82,0,0,0,9.19-15.23C154,179,137.49,174.17,127.6,171.31Zm83.09-26.84a8,8,0,0,0-10.23,4.84L188,184.21l-12.47-34.9a8,8,0,0,0-15.07,5.38l20,56a8,8,0,0,0,15.07,0l20-56A8,8,0,0,0,210.69,144.47ZM216,88v24a8,8,0,0,1-16,0V96H152a8,8,0,0,1-8-8V40H56v72a8,8,0,0,1-16,0V40A16,16,0,0,1,56,24h96a8,8,0,0,1,5.66,2.34l56,56A8,8,0,0,1,216,88Zm-27.31-8L160,51.31V80Z"/></svg></span>CSV</span>
+          <span class="chip"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24h0A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.84a157.44,157.44,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128ZM154,88H102a115.11,115.11,0,0,1,26-45A115.27,115.27,0,0,1,154,88Zm52.33,0H170.71a135.28,135.28,0,0,0-22.3-45.6A88.29,88.29,0,0,1,206.37,88ZM107.59,42.4A135.28,135.28,0,0,0,85.29,88H49.63A88.29,88.29,0,0,1,107.59,42.4ZM49.63,168H85.29a135.28,135.28,0,0,0,22.3,45.6A88.29,88.29,0,0,1,49.63,168Zm98.78,45.6a135.28,135.28,0,0,0,22.3-45.6h35.66A88.29,88.29,0,0,1,148.41,213.6Z"/></svg></span>Web pages</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="wrap">
+    <h2 class="reveal">How a summary gets made</h2>
+    <ol class="how">
+      <li class="reveal"><h3>Split</h3><p>Your text is cut into sentences.</p></li>
+      <li class="reveal"><h3>Embed</h3><p>A compact model turns each sentence into numbers that capture its meaning. It is about 130 MB and downloads once.</p></li>
+      <li class="reveal"><h3>Rank</h3><p>TextRank lets similar sentences vouch for each other. Sentences near the main topic score higher.</p></li>
+      <li class="reveal"><h3>Select</h3><p>MMR keeps the important sentences, drops the repeats, and puts them back in their original order.</p></li>
+    </ol>
+    <p class="note reveal">Optional: add your own Anthropic API key and Claude can smooth the chosen sentences into prose. It is off by default.</p>
+  </div>
+</section>
+
+<section class="block" id="download">
+  <div class="wrap">
+    <h2 class="reveal">Get the desktop app</h2>
+    <div class="dl reveal">
+      <canvas class="gridfx" aria-hidden="true"></canvas>
+      <div class="dl-in">
+        <div class="os" role="tablist" aria-label="Operating system">
+          <button role="tab" id="tab-Windows" aria-controls="pane-Windows" aria-selected="false" data-os="Windows"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,136H128a8,8,0,0,0-8,8v57.45a8,8,0,0,0,6.57,7.88l80,14.54A7.61,7.61,0,0,0,208,224a8,8,0,0,0,8-8V144A8,8,0,0,0,208,136Zm-8,70.41-64-11.63V152h64ZM96,136H32a8,8,0,0,0-8,8v40a8,8,0,0,0,6.57,7.87l64,11.64a8.54,8.54,0,0,0,1.43.13,8,8,0,0,0,8-8V144A8,8,0,0,0,96,136Zm-8,50.05-48-8.73V152H88ZM213.13,33.86a8,8,0,0,0-6.56-1.73l-80,14.55A8,8,0,0,0,120,54.55V112a8,8,0,0,0,8,8h80a8,8,0,0,0,8-8V40A8,8,0,0,0,213.13,33.86ZM200,104H136V61.22l64-11.63ZM101.13,54.22a8,8,0,0,0-6.56-1.73l-64,11.64A8,8,0,0,0,24,72v40a8,8,0,0,0,8,8H96a8,8,0,0,0,8-8V60.36A8,8,0,0,0,101.13,54.22ZM88,104H40V78.68L88,70Z"/></svg></span><span class="t">Windows</span></button>
+          <button role="tab" id="tab-macOS" aria-controls="pane-macOS" aria-selected="false" data-os="macOS"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M223.3,169.59a8.07,8.07,0,0,0-2.8-3.4C203.53,154.53,200,134.64,200,120c0-17.67,13.47-33.06,21.5-40.67a8,8,0,0,0,0-11.62C208.82,55.74,187.82,48,168,48a72.2,72.2,0,0,0-40,12.13,71.56,71.56,0,0,0-90.71,9.09A74.63,74.63,0,0,0,16,123.4a127.06,127.06,0,0,0,40.14,89.73A39.8,39.8,0,0,0,83.59,224h87.68a39.84,39.84,0,0,0,29.12-12.57,125,125,0,0,0,17.82-24.6C225.23,174,224.33,172,223.3,169.59Zm-34.63,30.94a23.76,23.76,0,0,1-17.4,7.47H83.59a23.82,23.82,0,0,1-16.44-6.51A111.14,111.14,0,0,1,32,123,58.5,58.5,0,0,1,48.65,80.47,54.81,54.81,0,0,1,88,64h.78A55.45,55.45,0,0,1,123,76.28a8,8,0,0,0,10,0A55.44,55.44,0,0,1,168,64a70.64,70.64,0,0,1,36,10.35c-13,14.52-20,30.47-20,45.65,0,23.77,7.64,42.73,22.18,55.3A105.82,105.82,0,0,1,188.67,200.53ZM128.23,30A40,40,0,0,1,167,0h1a8,8,0,0,1,0,16h-1a24,24,0,0,0-23.24,18,8,8,0,1,1-15.5-4Z"/></svg></span><span class="t">macOS</span></button>
+          <button role="tab" id="tab-Linux" aria-controls="pane-Linux" aria-selected="false" data-os="Linux"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229,214.25A8,8,0,0,1,217.76,213C216.39,211.27,184,169.86,184,88A56,56,0,0,0,72,88c0,81.86-32.37,123.27-33.75,125a8,8,0,0,1-12.51-10c.15-.2,7.69-9.9,15.13-28.74C47.77,156.8,56,127.64,56,88a72,72,0,0,1,144,0c0,39.64,8.23,68.8,15.13,86.28,7.48,18.94,15.06,28.64,15.14,28.74A8,8,0,0,1,229,214.25ZM100,88a12,12,0,1,0,12,12A12,12,0,0,0,100,88Zm68,12a12,12,0,1,0-12,12A12,12,0,0,0,168,100ZM99.58,128.84a8,8,0,0,0-7.15,14.31l32,16a7.94,7.94,0,0,0,7.15,0l32-16a8,8,0,0,0-7.16-14.31L128,143.05ZM128,176a54.07,54.07,0,0,0-47,28.11,8,8,0,1,0,14,7.78,37.35,37.35,0,0,1,66,0,8,8,0,0,0,14-7.78A54.07,54.07,0,0,0,128,176Z"/></svg></span><span class="t">Linux</span></button>
+        </div>
+        <div class="pane" id="pane-Windows" role="tabpanel" aria-labelledby="tab-Windows" hidden>
+          <h3>Windows 10 and 11</h3>
+          <p>Unzip the file and run Summarizer.exe. If SmartScreen warns you, choose More info, then Run anyway.</p>
+          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-Windows.zip"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for Windows</a><span class="file">Summarizer-Windows.zip</span></div>
+        </div>
+        <div class="pane" id="pane-macOS" role="tabpanel" aria-labelledby="tab-macOS" hidden>
+          <h3>macOS</h3>
+          <p>Unpack the file. The first time, right-click Summarizer.app and choose Open, because the app is not signed yet.</p>
+          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-macOS.tar.gz"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for macOS</a><span class="file">Summarizer-macOS.tar.gz</span></div>
+        </div>
+        <div class="pane" id="pane-Linux" role="tabpanel" aria-labelledby="tab-Linux" hidden>
+          <h3>Linux</h3>
+          <p>Install GTK and WebKit first (python3-gi and gir1.2-webkit2-4.1 on Debian and Ubuntu). Then run ./Summarizer/Summarizer.</p>
+          <div class="row2"><a class="btn primary" href="https://github.com/AWeebTaku/Summarizer/releases/latest/download/Summarizer-Linux.tar.gz"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span>Download for Linux</a><span class="file">Summarizer-Linux.tar.gz</span></div>
+        </div>
+        <p class="all">Every file and the release notes are on the <a href="https://github.com/AWeebTaku/Summarizer/releases/latest">releases page</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="install">
+  <div class="wrap">
+    <h2 class="reveal">Prefer Python?</h2>
+    <p class="sub reveal">Python 3.10 or newer. A virtual environment or pipx keeps things tidy.</p>
+    <div class="term reveal">
+      <div class="cm">Desktop app</div>
+      <div class="cmd"><code>pip install "text-summarizer-aweebtaku[desktop]"</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>summarizer-desktop</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cm">Command line</div>
+      <div class="cmd"><code>pip install text-summarizer-aweebtaku</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>summarize report.pdf -n 5 -b -k</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>summarize https://example.com/post</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+    </div>
+    <div class="term reveal">
+      <div class="cm">Python library</div>
+      <div class="cmd py"><code>from text_summarizer import summarize_file
+
+for name, summary in summarize_file("report.pdf", ratio=0.2):
+    print(name, summary)</code><button class="cp" aria-label="Copy code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><a href="https://github.com/AWeebTaku/Summarizer">Source on GitHub</a><a href="https://github.com/AWeebTaku/Summarizer/issues">Report a problem</a><a href="https://pypi.org/project/text-summarizer-aweebtaku/">PyPI</a></div>
+    <span>MIT licensed</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /* Scroll reveal: shows hierarchy as sections arrive. */
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  /* Spotlight: feeds the pointer position to the CSS so the card and its border light up under the cursor. */
+  document.querySelectorAll('.spot').forEach(el => el.addEventListener('pointermove', e => {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }));
+
+  /* Interactive grid: cells under the pointer light up and fade out. Draws only while something is glowing. */
+  function initGrid(host, ambient) {
+    const cv = host.querySelector('canvas.gridfx'), ctx = cv.getContext('2d');
+    const SIZE = 48; let W = 0, H = 0, cols = 0, rows = 0, dpr = 1, heat = new Float32Array(0), raf = 0, last = 0, visible = true;
+    function resize() {
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      W = host.clientWidth; H = host.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      cols = Math.ceil(W / SIZE); rows = Math.ceil(H / SIZE); heat = new Float32Array(cols * rows);
+      paint();
+    }
+    function paint() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const h = heat[r * cols + c]; if (h < .02) continue;
+        ctx.fillStyle = `rgba(43,103,240,${h * .3})`; ctx.fillRect(c * SIZE + 1, r * SIZE + 1, SIZE - 1, SIZE - 1);
+        ctx.strokeStyle = `rgba(123,169,255,${h * .75})`; ctx.strokeRect(c * SIZE + .5, r * SIZE + .5, SIZE, SIZE);
+      }
+      ctx.strokeStyle = 'rgba(130,165,255,.09)'; ctx.lineWidth = 1; ctx.beginPath();
+      for (let x = 0; x <= W; x += SIZE) { ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, H); }
+      for (let y = 0; y <= H; y += SIZE) { ctx.moveTo(0, y + .5); ctx.lineTo(W, y + .5); }
+      ctx.stroke();
+    }
+    function frame(t) {
+      const dt = Math.min(64, t - (last || t)); last = t; let live = false;
+      const k = Math.pow(.5, dt / 420);  // half-life of the glow
+      for (let i = 0; i < heat.length; i++) if (heat[i] > 0) { heat[i] *= k; if (heat[i] < .02) heat[i] = 0; else live = true; }
+      paint();
+      raf = live ? requestAnimationFrame(frame) : (last = 0);
+    }
+    const wake = () => { if (!raf || !last) { last = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); } };
+    const light = (c, r, v) => { if (c >= 0 && r >= 0 && c < cols && r < rows) heat[r * cols + c] = Math.max(heat[r * cols + c], v); };
+    resize(); new ResizeObserver(resize).observe(host);
+    if (reduce) return;  // static grid only
+    host.addEventListener('pointermove', e => {
+      const b = host.getBoundingClientRect(), c = Math.floor((e.clientX - b.left) / SIZE), r = Math.floor((e.clientY - b.top) / SIZE);
+      light(c, r, 1); light(c + 1, r, .34); light(c - 1, r, .34); light(c, r + 1, .34); light(c, r - 1, .34); wake();
+    });
+    new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(host);
+    if (ambient) setInterval(() => { if (visible && !document.hidden) { light(Math.floor(Math.random() * cols), Math.floor(Math.random() * rows), .55); wake(); } }, 1100);  // invites the first hover
+  }
+  initGrid(document.querySelector('.hero'), true);
+  initGrid(document.querySelector('.dl'), false);
+
+  /* Typing demo: type a document, sweep it, highlight what the app really picks, collect the summary. Picks come from the real engine. */
+  const DOCS = [
+    { s: ["Solar power is now the cheapest new electricity in most countries.", "Panel prices have fallen by about ninety percent in a decade.", "My neighbour's dog barks at every delivery van.", "Households pair rooftop panels with batteries to cover the evening.", "Utilities favour solar farms because they are built in under two years.", "Cats sleep for most of the day.", "Storage is the hard part, since the grid must balance every second.", "Analysts expect solar to lead global electricity by the mid 2030s."], p: [0, 3, 4] },
+    { s: ["The team met on Tuesday to review the product launch.", "Maria reported that the beta has 300 active testers.", "Lunch was ordered from the new place on Fifth Street.", "Crash reports dropped by half after the last patch.", "The main request from testers is a dark mode.", "Someone left a jacket in the second meeting room.", "Launch is moved to the 14th so the fixes can ship first.", "Daniel will update the roadmap and send it out on Friday."], p: [0, 4, 6] },
+    { s: ["Photosynthesis converts light energy into chemical energy in plants.", "It takes place in the chloroplasts, which contain chlorophyll.", "My lab partner forgot the goggles again.", "In the light reactions, water is split and oxygen is released.", "The Calvin cycle then uses the stored energy to build glucose from carbon dioxide.", "The lab is next to the cafeteria.", "Temperature, light and carbon dioxide levels all limit the rate.", "Glucose is used for growth or stored as starch."], p: [0, 1, 3] },
+  ];
+  const demo = document.getElementById('demo'), doc = document.getElementById('doc'), sweep = document.getElementById('sweep'),
+        result = document.getElementById('result'), sum = document.getElementById('sum'), meta = document.getElementById('meta');
+  let paused = false, resume = null;
+  const tick = async ms => { await sleep(ms); while (paused) await new Promise(r => resume = r); };
+  const setPaused = p => { paused = p; if (!p && resume) { resume(); resume = null; } };
+  new IntersectionObserver(es => setPaused(!es[0].isIntersecting || document.hidden)).observe(demo);
+  document.addEventListener('visibilitychange', () => setPaused(document.hidden));
+
+  const build = d => { doc.replaceChildren(sweep); return d.s.map(() => { const s = document.createElement('span'); s.className = 's'; doc.append(s, ' '); return s; }); };
+  const finish = (d, spans) => {
+    spans.forEach((s, i) => s.classList.add(d.p.includes(i) ? 'kept' : 'dim'));
+    meta.textContent = `${d.p.length} of ${d.s.length} sentences kept`;
+    sum.textContent = d.p.map(i => d.s[i]).join(' ');
+  };
+
+  async function play(d) {
+    const spans = build(d); result.classList.remove('show'); sweep.style.opacity = 0;
+    const caret = document.createElement('i'); caret.className = 'caret';
+    for (let i = 0; i < d.s.length; i++) {
+      spans[i].after(caret);
+      for (let c = 2; c <= d.s[i].length + 1; c += 2) { spans[i].textContent = d.s[i].slice(0, c); await tick(16); }
+      await tick(120);
+    }
+    caret.remove(); await tick(500);
+    sweep.style.transition = 'none'; sweep.style.transform = 'translateY(0)'; sweep.style.opacity = 1; void sweep.offsetWidth;
+    sweep.style.transition = 'transform 1.2s cubic-bezier(.45,0,.2,1), opacity .3s'; sweep.style.transform = `translateY(${doc.clientHeight}px)`;
+    await tick(1250); sweep.style.opacity = 0;
+    finish(d, spans); await tick(500); result.classList.add('show');
+    await tick(4200); demo.classList.add('fade'); await tick(550);
+    demo.classList.remove('fade');
+  }
+  if (reduce) { const d = DOCS[0], spans = build(d); spans.forEach((s, i) => s.textContent = d.s[i]); finish(d, spans); result.classList.add('show'); }
+  else (async () => { for (let k = 0; ; k++) await play(DOCS[k % DOCS.length]); })();
+
+  /* Download: pick the visitor's system, then let them switch. */
+  const guess = (() => {
+    const p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '', ua = navigator.userAgent || '';
+    if (/android|iphone|ipad|ipod/i.test(ua)) return null;
+    return /win/i.test(p) ? 'Windows' : /mac/i.test(p) ? 'macOS' : /linux|x11|cros/i.test(p + ua) ? 'Linux' : null;
+  })();
+  const tabs = [...document.querySelectorAll('.os button')];
+  const pick = os => tabs.forEach(b => {
+    const on = b.dataset.os === os; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+    document.getElementById('pane-' + b.dataset.os).hidden = !on;
+  });
+  tabs.forEach((b, i) => {
+    b.onclick = () => pick(b.dataset.os);
+    b.onkeydown = e => { const n = { ArrowRight: 1, ArrowLeft: -1 }[e.key]; if (!n) return; const t = tabs[(i + n + tabs.length) % tabs.length]; t.focus(); pick(t.dataset.os); };
+  });
+  pick(guess || 'Windows');
+  if (guess) {
+    const a = document.getElementById('hero-dl'), link = document.querySelector('#pane-' + guess + ' a.btn');
+    a.href = link.href; document.getElementById('hero-t').textContent = 'Download for ' + guess;
+    document.getElementById('hero-ic').innerHTML = document.querySelector('[data-os="' + guess + '"] .ic').innerHTML;
+  } else document.getElementById('hero-dl').href = '#download';
+
+  /* Copy buttons in the install terminal. */
+  const CHECK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg>`;
+  document.querySelectorAll('.cp').forEach(b => b.onclick = async () => {
+    const old = b.innerHTML;
+    try { await navigator.clipboard.writeText(b.previousElementSibling.textContent); b.innerHTML = CHECK; }
+    catch { b.textContent = '!'; }
+    setTimeout(() => b.innerHTML = old, 1400);
+  });
+})();
+</script>
+</body>
+</html>
