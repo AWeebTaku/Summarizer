@@ -1,44 +1,56 @@
 name: Release
-
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
 
 jobs:
-  release:
+  pypi:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build twine
-
-    - name: Build package
-      run: python -m build
-
+        python-version: '3.12'
+    - run: pip install build twine pytest && pip install -e ".[desktop,dev]" && pytest -q
+    - run: python -m build
     - name: Publish to PyPI
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}  # GitHub repository secret for PyPI authentication
-      run: |
-        twine upload --skip-existing dist/*
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: twine upload --skip-existing dist/*
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+  desktop:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
-        files: dist/*
+        python-version: '3.12'
+    - name: Linux GUI libraries
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y python3-gi gir1.2-webkit2-4.1 libgirepository1.0-dev libcairo2-dev pkg-config
+    - run: pip install -e ".[build]"
+    - name: Build
+      shell: bash
+      run: |
+        pyinstaller --noconfirm --name Summarizer --windowed --onedir \
+          --collect-all fastembed --collect-all onnxruntime --collect-all pysbd \
+          --collect-all trafilatura --collect-all justext --collect-all courlan --collect-all htmldate \
+          --add-data "text_summarizer/static${PATHSEP:-:}text_summarizer/static" \
+          text_summarizer/desktop.py
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PATHSEP: ${{ runner.os == 'Windows' && ';' || ':' }}
+    - name: Archive (tar keeps the executable bit on macOS/Linux)
+      if: runner.os != 'Windows'
+      run: tar -czf Summarizer-${{ runner.os }}.tar.gz -C dist .
+    - name: Archive
+      if: runner.os == 'Windows'
+      run: Compress-Archive -Path dist\* -DestinationPath Summarizer-${{ runner.os }}.zip
+    - uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          Summarizer-${{ runner.os }}.tar.gz
+          Summarizer-${{ runner.os }}.zip
