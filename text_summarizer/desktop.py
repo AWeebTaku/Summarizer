@@ -35,9 +35,15 @@ def _serve():
 
 
 def _linux_env():
-    # The window only shows our own local page, so Chromium's sandbox adds little. It also refuses to
-    # start on systems that restrict user namespaces (Ubuntu 24.04) and when run as root (containers).
-    os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox")
+    """Chromium flags for the Qt window. Set QTWEBENGINE_CHROMIUM_FLAGS yourself to override them.
+
+    --no-sandbox: the window only shows our own local page, so the sandbox adds little, and it refuses to
+        start on systems that restrict user namespaces (Ubuntu 24.04) and when run as root (containers).
+    --disable-gpu: this is a text interface, so software rendering is plenty, and it avoids the crashes
+        QtWebEngine hits when the graphics stack is missing or odd (virtual machines, remote desktops,
+        containers: "Failed to get system egl display").
+    """
+    os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
 
 def _check_qt(base: str):
