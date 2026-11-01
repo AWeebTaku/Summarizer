@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Summarizer
+GenericName=Document summarizer
+Comment=Summarize documents, PDFs, web pages and text, offline
+Exec=summarizer-app
+Icon=summarizer
+Terminal=false
+Categories=Office;TextTools;Utility;
+Keywords=summary;summarize;summarise;pdf;document;text;
+StartupWMClass=Summarizer

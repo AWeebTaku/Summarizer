@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Per-machine MSI (Program Files). Build:
+     wix build packaging\windows\summarizer.wxs -arch x64 -d Version=2.0.1 -d BundleDir=<full path to dist\Summarizer> -o release\Summarizer.msi -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Summarizer" Manufacturer="Aditya Chaurasiya" Version="$(Version)"
+           UpgradeCode="B5545314-F242-4DB7-8EAD-6B247A794927" Language="1033" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Summarizer is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="AppIcon" SourceFile="..\icons\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/AWeebTaku/Summarizer" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Summarizer" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <!-- every file of the frozen app except the exe, which gets the Start menu shortcut below -->
+      <Files Include="$(BundleDir)\**">
+        <Exclude Files="$(BundleDir)\Summarizer.exe" />
+      </Files>
+      <Component Id="MainExe">
+        <File Id="SummarizerExe" Source="$(BundleDir)\Summarizer.exe">
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Summarizer"
+                    WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="no" />
+        </File>
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="Main" Title="Summarizer" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+  </Package>
+</Wix>
