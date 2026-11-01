@@ -41,8 +41,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .btn:active{transform:translateY(1px) scale(.985)}
 .btn.primary{background:var(--blue);color:var(--blue-ink)}
 .btn.primary:hover{filter:brightness(1.12)}
-.btn.ghost{background:none;border-color:var(--line-2);color:var(--ink);font-weight:500}
-.btn.ghost:hover{border-color:var(--blue-text);background:var(--blue-soft)}
+.btn.ghost{background:var(--panel-2);border-color:var(--line-2);color:var(--ink);font-weight:500}  /* solid, so the animated grid never shows through */
+.btn.ghost:hover{border-color:var(--blue-text);background:#0f1a38}
 .btn.sm{height:38px;padding:0 16px;font-size:.92rem}
 
 /* nav */
@@ -327,20 +327,25 @@ for name, summary in summarize_file("report.pdf", ratio=0.2):
   /* Interactive grid: cells under the pointer light up and fade out. Draws only while something is glowing. */
   function initGrid(host, ambient) {
     const cv = host.querySelector('canvas.gridfx'), ctx = cv.getContext('2d');
-    const SIZE = 48; let W = 0, H = 0, cols = 0, rows = 0, dpr = 1, heat = new Float32Array(0), raf = 0, last = 0, visible = true;
+    // glow eases toward tgt (rise time ATTACK); tgt is set by the pointer and halves every HALF_LIFE. Both in ms.
+    const SIZE = 48, ATTACK = 40, HALF_LIFE = 110;
+    let W = 0, H = 0, cols = 0, rows = 0, dpr = 1, glow = new Float32Array(0), tgt = new Float32Array(0), raf = 0, last = 0, visible = true, prev = null;
+    const soft = t => t * t * (3 - 2 * t);  // smoothstep: a gentler start and tail than a straight line
     function resize() {
       dpr = Math.min(devicePixelRatio || 1, 2);
       W = host.clientWidth; H = host.clientHeight;
       cv.width = W * dpr; cv.height = H * dpr;
-      cols = Math.ceil(W / SIZE); rows = Math.ceil(H / SIZE); heat = new Float32Array(cols * rows);
+      cols = Math.ceil(W / SIZE); rows = Math.ceil(H / SIZE);
+      glow = new Float32Array(cols * rows); tgt = new Float32Array(cols * rows);
       paint();
     }
     function paint() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-        const h = heat[r * cols + c]; if (h < .02) continue;
-        ctx.fillStyle = `rgba(43,103,240,${h * .3})`; ctx.fillRect(c * SIZE + 1, r * SIZE + 1, SIZE - 1, SIZE - 1);
-        ctx.strokeStyle = `rgba(123,169,255,${h * .75})`; ctx.strokeRect(c * SIZE + .5, r * SIZE + .5, SIZE, SIZE);
+        const h = glow[r * cols + c]; if (h < .02) continue;
+        const a = soft(Math.min(1, h));
+        ctx.fillStyle = `rgba(43,103,240,${a * .3})`; ctx.fillRect(c * SIZE + 1, r * SIZE + 1, SIZE - 1, SIZE - 1);
+        ctx.strokeStyle = `rgba(123,169,255,${a * .75})`; ctx.strokeRect(c * SIZE + .5, r * SIZE + .5, SIZE, SIZE);
       }
       ctx.strokeStyle = 'rgba(130,165,255,.09)'; ctx.lineWidth = 1; ctx.beginPath();
       for (let x = 0; x <= W; x += SIZE) { ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, H); }
@@ -348,20 +353,35 @@ for name, summary in summarize_file("report.pdf", ratio=0.2):
       ctx.stroke();
     }
     function frame(t) {
-      const dt = Math.min(64, t - (last || t)); last = t; let live = false;
-      const k = Math.pow(.5, dt / 420);  // half-life of the glow
-      for (let i = 0; i < heat.length; i++) if (heat[i] > 0) { heat[i] *= k; if (heat[i] < .02) heat[i] = 0; else live = true; }
+      const dt = Math.min(48, t - (last || t)); last = t; let live = false;
+      const rise = 1 - Math.exp(-dt / ATTACK), fall = Math.pow(.5, dt / HALF_LIFE);
+      for (let i = 0; i < glow.length; i++) {
+        if (!tgt[i] && !glow[i]) continue;
+        glow[i] += (tgt[i] - glow[i]) * rise;
+        tgt[i] = tgt[i] < .01 ? 0 : tgt[i] * fall;
+        if (!tgt[i] && glow[i] < .02) glow[i] = 0; else live = true;
+      }
       paint();
       raf = live ? requestAnimationFrame(frame) : (last = 0);
     }
     const wake = () => { if (!raf || !last) { last = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); } };
-    const light = (c, r, v) => { if (c >= 0 && r >= 0 && c < cols && r < rows) heat[r * cols + c] = Math.max(heat[r * cols + c], v); };
+    const light = (c, r, v) => { if (c >= 0 && r >= 0 && c < cols && r < rows) tgt[r * cols + c] = Math.max(tgt[r * cols + c], v); };
+    const bloom = (c, r, v) => {  // the cell plus a soft ring around it
+      light(c, r, v);
+      light(c + 1, r, v * .26); light(c - 1, r, v * .26); light(c, r + 1, v * .26); light(c, r - 1, v * .26);
+      light(c + 1, r + 1, v * .11); light(c - 1, r + 1, v * .11); light(c + 1, r - 1, v * .11); light(c - 1, r - 1, v * .11);
+    };
     resize(); new ResizeObserver(resize).observe(host);
     if (reduce) return;  // static grid only
     host.addEventListener('pointermove', e => {
       const b = host.getBoundingClientRect(), c = Math.floor((e.clientX - b.left) / SIZE), r = Math.floor((e.clientY - b.top) / SIZE);
-      light(c, r, 1); light(c + 1, r, .34); light(c - 1, r, .34); light(c, r + 1, .34); light(c, r - 1, .34); wake();
+      if (prev) {  // fill in the cells between two pointer events, so a fast move leaves a trail, not dots
+        const n = Math.max(Math.abs(c - prev.c), Math.abs(r - prev.r));
+        for (let k = 1; k < n; k++) bloom(Math.round(prev.c + (c - prev.c) * k / n), Math.round(prev.r + (r - prev.r) * k / n), 1);
+      }
+      bloom(c, r, 1.3); prev = { c, r }; wake();  // 1.3 because the fade starts while the glow is still rising
     });
+    host.addEventListener('pointerleave', () => { prev = null; });
     new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(host);
     if (ambient) setInterval(() => { if (visible && !document.hidden) { light(Math.floor(Math.random() * cols), Math.floor(Math.random() * rows), .55); wake(); } }, 1100);  // invites the first hover
   }
