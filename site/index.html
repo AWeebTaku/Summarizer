@@ -166,7 +166,7 @@ footer a:hover{color:var(--ink)}
     <a class="brand" href="#top">Summarizer</a>
     <div class="links">
       <a href="#how">How it works</a>
-      <a href="#install">Install</a>
+      <a href="#source">Run from source</a>
       <a href="https://github.com/AWeebTaku/Summarizer">GitHub</a>
       <a class="btn primary sm" href="#download">Download</a>
     </div>
@@ -181,7 +181,7 @@ footer a:hover{color:var(--ink)}
       <p class="lead">A free desktop app that picks the key sentences from any document. It runs offline and never invents facts.</p>
       <div class="cta">
         <a class="btn primary" id="hero-dl" href="https://github.com/AWeebTaku/Summarizer/releases/latest"><span class="ic" id="hero-ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></span><span id="hero-t">Download</span></a>
-        <a class="btn ghost" href="#install">Install with pip</a>
+        <a class="btn ghost" href="#source">Run from source</a>
       </div>
     </div>
     <div class="demo" id="demo" aria-hidden="true">
@@ -278,32 +278,27 @@ footer a:hover{color:var(--ink)}
   </div>
 </section>
 
-<section class="block" id="install">
+<section class="block" id="source">
   <div class="wrap">
-    <h2 class="reveal">Prefer Python?</h2>
-    <p class="sub reveal">Python 3.10 or newer. A virtual environment or pipx keeps things tidy.</p>
+    <h2 class="reveal">Or run it from source</h2>
+    <p class="sub reveal">Python 3.10 or newer. This gives you the app, the command line and the Python modules.</p>
     <div class="term reveal">
-      <div class="cm">Desktop app</div>
-      <div class="cmd"><code>pip install "text-summarizer-aweebtaku[desktop]"</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
-      <div class="cmd"><code>summarizer-desktop</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cm">Get the code and open the app</div>
+      <div class="cmd"><code>git clone https://github.com/AWeebTaku/Summarizer.git &amp;&amp; cd Summarizer</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>python -m venv .venv &amp;&amp; source .venv/bin/activate</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>pip install -r requirements-desktop.txt</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>python -m text_summarizer.desktop</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
       <div class="cm">Command line</div>
-      <div class="cmd"><code>pip install text-summarizer-aweebtaku</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
-      <div class="cmd"><code>summarize report.pdf -n 5 -b -k</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
-      <div class="cmd"><code>summarize https://example.com/post</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>python -m text_summarizer report.pdf -n 5 -f bullets -k</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
+      <div class="cmd"><code>python -m text_summarizer https://example.com/post</code><button class="cp" aria-label="Copy command"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
     </div>
-    <div class="term reveal">
-      <div class="cm">Python library</div>
-      <div class="cmd py"><code>from text_summarizer import summarize_file
-
-for name, summary in summarize_file("report.pdf", ratio=0.2):
-    print(name, summary)</code><button class="cp" aria-label="Copy code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg></button></div>
-    </div>
+    <p class="sub reveal" style="margin:20px 0 0">On Windows, activate with <code>.venv\Scripts\activate</code>. The README covers Linux toolkits, the browser fallback and every option.</p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <div><a href="https://github.com/AWeebTaku/Summarizer">Source on GitHub</a><a href="https://github.com/AWeebTaku/Summarizer/issues">Report a problem</a><a href="https://pypi.org/project/text-summarizer-aweebtaku/">PyPI</a></div>
+    <div><a href="https://github.com/AWeebTaku/Summarizer">Source on GitHub</a><a href="https://github.com/AWeebTaku/Summarizer/issues">Report a problem</a></div>
     <span>MIT licensed</span>
   </div>
 </footer>
