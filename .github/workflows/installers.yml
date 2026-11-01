@@ -49,13 +49,14 @@ jobs:
           libnss3 libnspr4 libasound2 libcups2 libdbus-1-3 libfontconfig1 libfreetype6 libgbm1 libglib2.0-0 \
           libharfbuzz0b libxcomposite1 libxdamage1 libxrandr2 libxtst6 libxi6 libxext6 libxfixes3 libxrender1 \
           libegl1 libgl1 libdrm2 libwayland-client0 libwayland-cursor0 libwayland-egl1 libxcb-dri3-0
-    - run: pip install -e ".[build]"
+    - run: pip install -r requirements-desktop.txt pyinstaller
     - name: Freeze the app
       run: python packaging/build_bundle.py
-    - name: Self-test the frozen app (off-screen, then on a real X server)
+    - name: Self-test the frozen app (off-screen, then on a real X server, then a real native window)
       run: |
         dist/Summarizer/Summarizer --selftest
         QT_QPA_PLATFORM=xcb xvfb-run -a dist/Summarizer/Summarizer --selftest
+        QT_QPA_PLATFORM=xcb xvfb-run -a dist/Summarizer/Summarizer --selftest-window
     - name: Fetch packaging tools
       run: |
         mkdir -p "$HOME/tools" && cd "$HOME/tools"
@@ -69,10 +70,11 @@ jobs:
       env:
         VERSION: ${{ steps.v.outputs.version }}
       run: NFPM="$HOME/tools/nfpm" APPIMAGETOOL="$HOME/tools/appimagetool" packaging/linux/build.sh
-    - name: Test the AppImage (off-screen, then on a real X server)
+    - name: Test the AppImage (off-screen, then on a real X server, then a real native window)
       run: |
         APPIMAGE_EXTRACT_AND_RUN=1 release/Summarizer-x86_64.AppImage --selftest
         QT_QPA_PLATFORM=xcb APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a release/Summarizer-x86_64.AppImage --selftest
+        QT_QPA_PLATFORM=xcb APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a release/Summarizer-x86_64.AppImage --selftest-window
     - name: Install each package in a clean distribution and run the self-test
       run: packaging/linux/test-in-containers.sh
     - uses: actions/upload-artifact@v4
@@ -94,14 +96,16 @@ jobs:
       id: v
       shell: bash
       run: echo "version=$(python -c "import re,pathlib;print(re.search(r'__version__ = \"([^\"]+)\"', pathlib.Path('text_summarizer/__init__.py').read_text()).group(1))")" >> "$GITHUB_OUTPUT"
-    - run: pip install -e ".[build]"
+    - run: pip install -r requirements-desktop.txt pyinstaller
     - name: Freeze the app
       run: python packaging/build_bundle.py
-    - name: Self-test the frozen app
+    - name: Self-test the frozen app, including a real native window
       shell: pwsh
       run: |
         $p = Start-Process dist\Summarizer\Summarizer.exe -ArgumentList '--selftest' -Wait -PassThru
         if ($p.ExitCode -ne 0) { throw "selftest exited with $($p.ExitCode)" }
+        $w = Start-Process dist\Summarizer\Summarizer.exe -ArgumentList '--selftest-window' -Wait -PassThru
+        if ($w.ExitCode -ne 0) { throw "native window selftest exited with $($w.ExitCode)" }
     - name: Build the setup.exe (Inno Setup)
       shell: pwsh
       run: |
@@ -151,11 +155,13 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - run: pip install -e ".[build]"
+    - run: pip install -r requirements-desktop.txt pyinstaller
     - name: Freeze the app
       run: python packaging/build_bundle.py
-    - name: Self-test the frozen app
-      run: dist/Summarizer.app/Contents/MacOS/Summarizer --selftest
+    - name: Self-test the frozen app, including a real native window
+      run: |
+        dist/Summarizer.app/Contents/MacOS/Summarizer --selftest
+        dist/Summarizer.app/Contents/MacOS/Summarizer --selftest-window
     - name: Build the .dmg
       run: |
         mkdir -p release dmgroot

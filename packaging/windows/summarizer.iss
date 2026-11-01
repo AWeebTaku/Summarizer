@@ -1,4 +1,4 @@
-; Per-user installer (no admin rights needed). Build: iscc /DVersion=2.0.1 packaging\windows\summarizer.iss
+; Per-user installer (no admin rights needed). Build: iscc /DVersion=2.0.0 packaging\windows\summarizer.iss
 #ifndef Version
   #define Version "0.0.0"
 #endif

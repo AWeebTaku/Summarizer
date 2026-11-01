@@ -11,4 +11,4 @@
 
 The installers are not code-signed yet, so Windows SmartScreen and macOS Gatekeeper will warn the first time. The README explains how to open them (on macOS 15 and later, use System Settings, Privacy & Security, Open Anyway). `SHA256SUMS.txt` lists a checksum for each file. Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12, Fedora 36 and later).
 
-Prefer Python? `pip install "text-summarizer-aweebtaku[desktop]"`.
+Prefer to run it from source? The README explains how.

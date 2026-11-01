@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Make every Linux download from the frozen app in dist/Summarizer.
-# Usage: VERSION=2.0.1 NFPM=/path/to/nfpm APPIMAGETOOL=/path/to/appimagetool packaging/linux/build.sh
+# Usage: VERSION=2.0.0 NFPM=/path/to/nfpm APPIMAGETOOL=/path/to/appimagetool packaging/linux/build.sh
 # Output: release/Summarizer-amd64.deb, -x86_64.rpm, -x86_64.pkg.tar.zst, -x86_64.AppImage
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-: "${VERSION:?set VERSION, for example 2.0.1}"
+: "${VERSION:?set VERSION, for example 2.0.0}"
 NFPM="${NFPM:-nfpm}"
 APPIMAGETOOL="${APPIMAGETOOL:-appimagetool}"
 [ -x dist/Summarizer/Summarizer ] || { echo "dist/Summarizer/Summarizer not found: run packaging/build_bundle.py first" >&2; exit 1; }

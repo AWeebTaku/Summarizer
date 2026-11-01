@@ -1,13 +1,13 @@
 name: Release
-# Pushing a tag like v2.0.1 builds and tests every installer, then publishes to PyPI and creates the GitHub release.
-# To rebuild only the installers for an existing tag (no PyPI), run this workflow by hand and enter the tag.
+# Pushing a tag like v2.0.0 builds and tests every installer, then creates the GitHub release with the downloads.
+# To rebuild the installers for an existing tag, run this workflow by hand and enter the tag.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to attach installers to (for example v2.0.1). Does not publish to PyPI.'
+        description: 'Existing tag to attach installers to (for example v2.0.0)'
         required: true
 
 permissions:
@@ -19,26 +19,8 @@ jobs:
     with:
       ref: ${{ github.event.inputs.tag || github.ref }}
 
-  # PyPI never lets a version number be reused, so it only runs once every installer has built and passed.
-  pypi:
-    needs: installers
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - run: pip install build twine pytest && pip install -e ".[desktop,dev]" && pytest -q
-    - run: python -m build
-    - name: Publish to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: twine upload --skip-existing dist/*
-
   release:
-    needs: installers
+    needs: installers   # nothing is published unless every installer built and passed its tests
     runs-on: ubuntu-latest
     permissions:
       contents: write   # the only job that can write to the repository

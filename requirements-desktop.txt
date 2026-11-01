@@ -1,0 +1,7 @@
+# Everything above, plus the toolkit for the native window.
+#   pip install -r requirements-desktop.txt
+-r requirements.txt
+
+# Windows (WebView2) and macOS (WebKit) provide the window; Linux gets Qt, which brings its own browser engine.
+pywebview>=5; sys_platform != "linux"
+pywebview[qt]>=5; sys_platform == "linux"

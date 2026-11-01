@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Per-machine MSI (Program Files). WiX resolves relative paths from the working directory, so the
      folders are passed in as absolute paths. Build (from the repo root):
-     wix build packaging\windows\summarizer.wxs -arch x64 -d Version=2.0.1 -d BundleDir=C:\path\to\dist\Summarizer -d IconFile=C:\path\to\packaging\icons\icon.ico -o release\Summarizer.msi -->
+     wix build packaging\windows\summarizer.wxs -arch x64 -d Version=2.0.0 -d BundleDir=C:\path\to\dist\Summarizer -d IconFile=C:\path\to\packaging\icons\icon.ico -o release\Summarizer.msi -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package Name="Summarizer" Manufacturer="Aditya Chaurasiya" Version="$(Version)"
            UpgradeCode="B5545314-F242-4DB7-8EAD-6B247A794927" Language="1033" Scope="perMachine">
