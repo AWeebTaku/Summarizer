@@ -97,9 +97,6 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -108,20 +105,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Data files
-*.csv
-*.txt
-!data/*.csv
-glove.6B.100d.txt
-glove.6B.100d.txt.gz
-glove.6B.100d.txt.zip
-
 # PyPI configuration (contains API tokens)
 .pypirc
 
 # Backup files
-*.backup
-glove.6B.100d.txt.backup/
 
 # Extra files/folders to ignore
 Presentation/
@@ -129,3 +116,31 @@ Presentation/
 *.docx
 *.pptx
 *.pdf
+
+# --- Summarizer ---
+# virtualenvs / secrets
+.venv/
+venv/
+.env
+.env.*
+
+# model caches and local data
+model-cache/
+.cache/
+/data/
+
+# desktop builds (PyInstaller)
+*.spec
+Summarizer.app/
+Summarizer-*.zip
+Summarizer-*.tar.gz
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Claude Code session file
+.claude_session

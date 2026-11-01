@@ -1,27 +1,16 @@
-from .summarizer import TextSummarizer
-from pathlib import Path
-import os
+"""Summarize text, files and web pages with sentence embeddings, TextRank and MMR.
 
-__version__ = "1.3.2"
+    from text_summarizer import summarize, summarize_file
 
-# Automatically ensure GloVe embeddings are available on package import
-def _ensure_glove_embeddings():
-    """Ensure GloVe embeddings are downloaded on package import."""
-    try:
-        home_dir = Path.home()
-        glove_dir = home_dir / '.text_summarizer'
-        glove_file = glove_dir / 'glove.6B.100d.txt'
-        
-        # If GloVe file doesn't exist, download it
-        if not glove_file.exists():
-            print("Initializing GloVe embeddings for text-summarizer...")
-            from .summarizer import TextSummarizer
-            # Create a temporary instance to trigger download
-            summarizer = TextSummarizer()
-            print("GloVe embeddings ready!")
-    except Exception as e:
-        # Silently fail - user can still use the package, just slower on first run
-        pass
+    summary = summarize(text, ratio=0.2)       # or n=5
+    print(summary)                             # the summary text
+    summary.sentences, summary.keywords, summary.reduction
 
-# Download embeddings on package import (not blocking)
-_ensure_glove_embeddings()
+    for name, summary in summarize_file("report.pdf"):   # also .docx .txt .md .csv or a URL
+        print(name, summary)
+"""
+from .engine import Summary, summarize, summarize_file, summarize_many, warm_up
+from .ingest import load
+
+__version__ = "2.0.0"
+__all__ = ["Summary", "summarize", "summarize_file", "summarize_many", "load", "warm_up", "__version__"]
