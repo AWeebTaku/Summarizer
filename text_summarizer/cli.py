@@ -109,8 +109,9 @@ def main(argv=None):
             docs = [("stdin", sys.stdin.read())] if source == "-" else ingest.load(source, args.column)
             for name, text in docs:
                 s = engine.summarize(text, n=args.sentences, ratio=args.ratio)
+                for w in s.warnings:
+                    print(f"summarizer: warning: {name}: {w}", file=sys.stderr)
                 if not s:
-                    print(f"summarizer: warning: {name}: no sentences found (a scanned PDF has no text layer)", file=sys.stderr)
                     continue
                 ai_text = None
                 if args.ai:

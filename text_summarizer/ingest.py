@@ -10,6 +10,10 @@ MAX_PAGE = 5_000_000
 EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".csv"}
 
 
+class NoTextError(ValueError):
+    """A document that opened fine but has no text in it (a scanned PDF, an empty file)."""
+
+
 def _fetch(url):
     if urlparse(url).scheme not in ("http", "https"):
         raise ValueError(f"bad URL: {url}")
@@ -37,10 +41,22 @@ def from_url(url):
 
 def from_pdf(path):
     from pypdf import PdfReader
+    name = Path(path).name
     try:
-        return [(Path(path).name, "\n".join(p.extract_text() or "" for p in PdfReader(path).pages))]
-    except Exception as e:  # pypdf raises its own error types for damaged or encrypted files
-        raise ValueError(f"could not read {Path(path).name} as a PDF ({type(e).__name__})") from e
+        reader = PdfReader(path)
+        if reader.is_encrypted and not reader.decrypt(""):  # many PDFs are "encrypted" with an empty password
+            raise ValueError(f"{name} is password protected")
+        pages = [p.extract_text() or "" for p in reader.pages]
+    except ValueError:
+        raise
+    except Exception as e:  # pypdf raises its own error types for damaged files
+        raise ValueError(f"could not read {name} as a PDF ({type(e).__name__})") from e
+    text = "\n".join(pages)
+    if not text.strip():
+        raise NoTextError(f"{name} has {len(pages)} page{'s' if len(pages) != 1 else ''} but no text. "
+                          "It is probably a scan (pictures of pages), and OCR is not supported yet. "
+                          "Run it through an OCR tool first, then try again.")
+    return [(name, text)]
 
 
 def from_docx(path):

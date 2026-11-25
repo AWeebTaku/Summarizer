@@ -76,3 +76,15 @@ def test_ping_records_that_the_page_is_alive():
     assert app.state.last_ping == 0
     assert client.post("/api/ping").json() == {"ok": True}
     assert app.state.last_ping > 0
+
+
+def test_warnings_reach_the_api_and_scanned_pdfs_are_a_422(monkeypatch):
+    from pypdf import PdfWriter
+    import io
+    from tests.test_core import OTHER
+    monkeypatch.setattr(server.engine, "embed", fake_embed)
+    d = c.post("/api/summarize", data={"text": " ".join([OTHER["german"]] * 3), "n": 1}).json()["docs"][0]
+    assert any("English" in w for w in d["warnings"])
+    w = PdfWriter(); w.add_blank_page(width=100, height=100); buf = io.BytesIO(); w.write(buf)
+    r = c.post("/api/summarize", files={"file": ("scan.pdf", buf.getvalue())})
+    assert r.status_code == 422 and "OCR" in r.json()["detail"]

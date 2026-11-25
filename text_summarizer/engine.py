@@ -2,6 +2,7 @@
 import math
 import re
 import threading
+import unicodedata
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -25,6 +26,37 @@ but by can did do does doing down during each few for from further had has have 
 into is it its just me more most my no nor not now of off on once only or other our out over own same she should so some such
 than that the their them then there these they this those through to too under until up very was we were what when where
 which while who whom why will with would you your""".split())
+
+
+def looks_english(text: str) -> bool:
+    """Cheap check that needs no extra package: mostly Latin letters, and a normal share of English function words.
+
+    English prose is roughly 35-50% words like "the", "of", "and". Spanish, French, German and so on score well under
+    15%. Very short or code-like text can't be judged, so it counts as English (no false alarm).
+    """
+    letters = [c for c in text if c.isalpha()]
+    if len(letters) < 40:
+        return True
+    latin = sum(1 for c in letters if "LATIN" in unicodedata.name(c, ""))
+    if latin / len(letters) < 0.7:   # Cyrillic, Greek, Arabic, Devanagari, CJK, ...
+        return False
+    words = re.findall(r"[a-z]+", text.lower())
+    if len(words) < 30:
+        return True
+    return sum(w in _STOP for w in words) / len(words) >= 0.15
+
+
+def _warnings(text: str, sents: list[str], kept: int) -> tuple[str, ...]:
+    out = []
+    if not sents:
+        out.append("Nothing to summarize: no sentence of three words or more was found.")
+        return tuple(out)
+    if not looks_english(text):
+        out.append("This text does not look like English. The sentence splitter and the language model are tuned for English, "
+                   "so the summary may be poor.")
+    if kept >= len(sents):
+        out.append("The text is short, so nothing was left out.")
+    return tuple(out)
 
 
 _lock = threading.Lock()  # the startup warm-up and a first request must not both download the model
@@ -94,7 +126,7 @@ def _mmr(E, scores, k, lam=0.7):
 
 
 def _keywords(sents, k=8):
-    words = re.findall(r"[a-z][a-z'-]{2,}", " ".join(sents).lower())
+    words = re.findall(r"[^\W\d_][\w'-]{2,}", " ".join(sents).lower())  # any letters, not just a-z
     return [w for w, _ in Counter(w for w in words if w not in _STOP).most_common(k)]
 
 
@@ -113,6 +145,7 @@ class Summary:
     indices: list[int]            # their positions in ``source_sentences``
     keywords: list[str]
     source_sentences: list[str]   # every sentence of the input
+    warnings: tuple[str, ...] = ()  # things worth telling the reader: non-English text, a text too short to shorten, ...
 
     def __str__(self) -> str:
         return self.text
@@ -138,7 +171,7 @@ class Summary:
 
     def to_dict(self) -> dict:
         return {"summary": self.text, "sentences": self.sentences, "indices": self.indices,
-                "keywords": self.keywords, "all": self.source_sentences}
+                "keywords": self.keywords, "all": self.source_sentences, "warnings": list(self.warnings)}
 
     def __getitem__(self, key: str):  # dict-style access, e.g. summary["keywords"]
         return self.to_dict()[key]
@@ -163,7 +196,7 @@ def summarize(text: str, *, n: int | None = None, ratio: float | None = None, em
     embedder = embedder or embed  # looked up per call, so embed can be replaced (tests, custom models)
     sents = split_sentences(text)
     if not sents:
-        return Summary("", [], [], [], [])
+        return Summary("", [], [], [], [], _warnings(text, sents, 0))
     k = _length(len(sents), n, ratio)
     if k >= len(sents):
         idx = list(range(len(sents)))
@@ -178,7 +211,7 @@ def summarize(text: str, *, n: int | None = None, ratio: float | None = None, em
         Ec = E[cand]  # reduce: final ranking over candidates
         idx = [int(cand[i]) for i in _mmr(Ec, _scores(Ec), k, lam)]
     chosen = [sents[i] for i in idx]
-    return Summary(" ".join(chosen), chosen, idx, _keywords(sents), sents)
+    return Summary(" ".join(chosen), chosen, idx, _keywords(sents), sents, _warnings(text, sents, len(idx)))
 
 
 def summarize_many(docs: Iterable[tuple[str, str]], **options) -> list[tuple[str, Summary]]:

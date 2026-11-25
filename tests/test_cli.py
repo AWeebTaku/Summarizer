@@ -76,7 +76,7 @@ def test_bad_arguments_exit_2(capsys):
 
 def test_empty_document_warns(capsys):
     code, out, err = run(capsys, "ok. no.")
-    assert code == 0 and out == "" and "no sentences found" in err
+    assert code == 0 and out == "" and "Nothing to summarize" in err
 
 
 def test_ai_needs_a_key(capsys, monkeypatch):
@@ -92,3 +92,17 @@ def test_version_and_help(capsys):
     with pytest.raises(SystemExit):
         cli.main(["--help"])
     assert "examples:" in capsys.readouterr().out
+
+
+def test_cli_warns_about_non_english_and_scanned_pdfs(capsys, tmp_path):
+    from pypdf import PdfWriter
+    from tests.test_core import OTHER
+    code, out, err = run(capsys, " ".join([OTHER["french"]] * 3), "-n", "1")
+    assert code == 0 and out.strip() and "does not look like English" in err
+    w = PdfWriter()
+    w.add_blank_page(width=100, height=100)
+    f = tmp_path / "scan.pdf"
+    with open(f, "wb") as fh:
+        w.write(fh)
+    code, out, err = run(capsys, str(f))
+    assert code == 1 and "no text" in err and "OCR" in err

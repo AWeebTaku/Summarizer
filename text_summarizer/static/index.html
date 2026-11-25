@@ -114,6 +114,7 @@ details.custom summary .ic{transition:transform .2s var(--ease)}
 .body{font-size:1.06rem;line-height:1.75}
 .body p{margin:0;white-space:pre-wrap}
 .body ul{margin:0;padding-left:20px}.body li{margin:8px 0}
+.note{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line-strong);border-left:3px solid var(--accent-text);border-radius:var(--r);background:var(--surface-2);color:var(--ink);font-size:.9rem;line-height:1.5}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
 .chip{background:var(--surface-2);border-radius:8px;padding:2px 10px;font-size:.82rem;color:var(--mute)}
 .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
@@ -323,6 +324,7 @@ function card(d, all) {
 
   return el('article', { className: 'res' },
     el('div', { className: 'res-head' }, el('h2', { textContent: d.name }), stat),
+    ...(d.warnings || []).map(w => el('p', { className: 'note', role: 'note', textContent: w })),
     body,
     el('div', { className: 'chips' }, ...d.keywords.map(k => el('span', { className: 'chip', textContent: k }))),
     el('div', { className: 'tools' }, ...tools), src);

@@ -92,7 +92,7 @@ def test_summary_object():
     assert s.bullets().count("\n") == 1 and s.bullets().startswith("- ")
     assert s["summary"] == s.text and s["all"] == s.source_sentences  # dict-style access still works
     assert 0 < s.reduction < 1 and s.summary_words < s.source_words
-    assert set(s.to_dict()) == {"summary", "sentences", "indices", "keywords", "all"}
+    assert set(s.to_dict()) == {"summary", "sentences", "indices", "keywords", "all", "warnings"}
     empty = engine.summarize("", embedder=fake_embed)
     assert not empty and empty.reduction == 0.0
 
@@ -124,3 +124,68 @@ def test_missing_file_and_damaged_files_have_clear_errors(tmp_path):
     for name in ("x.pdf", "x.docx"):
         with pytest.raises(ValueError):
             ingest.load(str(tmp_path / name))
+
+
+ENGLISH = ("The committee met on Tuesday to discuss the budget for the coming year, and most of the members said that "
+           "they would support the plan if it included more money for the schools in the northern part of the city.")
+OTHER = {
+    "spanish": "El comité se reunió el martes para discutir el presupuesto del próximo año, y la mayoría de los miembros dijo que apoyaría el plan si incluía más dinero para las escuelas de la parte norte de la ciudad.",
+    "french": "Le comité s'est réuni mardi pour discuter du budget de l'année prochaine, et la plupart des membres ont déclaré qu'ils soutiendraient le plan s'il prévoyait plus d'argent pour les écoles du nord de la ville.",
+    "german": "Der Ausschuss traf sich am Dienstag, um den Haushalt für das kommende Jahr zu besprechen, und die meisten Mitglieder sagten, dass sie den Plan unterstützen würden, wenn er mehr Geld für die Schulen im Norden der Stadt enthielte.",
+    "russian": "Комитет собрался во вторник, чтобы обсудить бюджет на следующий год, и большинство членов заявили, что поддержат план, если он предусматривает больше денег для школ в северной части города.",
+    "hindi": "समिति ने मंगलवार को अगले वर्ष के बजट पर चर्चा करने के लिए बैठक की और अधिकांश सदस्यों ने कहा कि यदि योजना में शहर के उत्तरी हिस्से के स्कूलों के लिए अधिक धन शामिल होगा तो वे इसका समर्थन करेंगे।",
+    "chinese": "委员会周二开会讨论明年的预算，大多数成员表示，如果该计划为城市北部的学校提供更多资金，他们将支持该计划。",
+}
+
+
+def test_language_check():
+    assert engine.looks_english(ENGLISH)
+    assert engine.looks_english("Short text")                    # too little to judge: no false alarm
+    assert engine.looks_english("def f(x):\n    return x * 2\n" * 3)  # code is not "foreign"
+    for lang, text in OTHER.items():
+        assert not engine.looks_english(text), lang
+
+
+def test_non_english_text_still_summarizes_but_warns():
+    r = engine.summarize(" ".join(OTHER["spanish"] + " " for _ in range(4)), n=1, embedder=fake_embed)
+    assert r.sentences and any("English" in w for w in r.warnings)
+    assert not engine.summarize(DOC, n=2, embedder=fake_embed).warnings
+
+
+def test_short_input_is_returned_whole_with_a_note():
+    r = engine.summarize("Cats sleep a lot. Dogs bark at the mailman.", n=3, embedder=fake_embed)
+    assert len(r.sentences) == 2 and any("short" in w for w in r.warnings)
+    r = engine.summarize("Hi. Ok.", embedder=fake_embed)
+    assert not r and any("Nothing to summarize" in w for w in r.warnings)
+
+
+def test_scanned_pdf_gets_a_clear_error(tmp_path):
+    import pytest
+    from pypdf import PdfWriter
+    w = PdfWriter()
+    w.add_blank_page(width=200, height=200)
+    w.add_blank_page(width=200, height=200)
+    f = tmp_path / "scan.pdf"
+    with open(f, "wb") as fh:
+        w.write(fh)
+    with pytest.raises(ingest.NoTextError, match="2 pages but no text.*scan.*OCR"):
+        ingest.load(str(f))
+    assert issubclass(ingest.NoTextError, ValueError)  # so the CLI and the API report it like any bad input
+
+
+def test_keywords_keep_accented_words_whole():
+    kw = engine._keywords(["El comité votó el presupuesto.", "El comité aprobó la reunión del martes."])
+    assert "comité" in kw and "comit" not in kw
+
+
+def test_password_protected_pdf_says_so(tmp_path):
+    import pytest
+    from pypdf import PdfWriter
+    w = PdfWriter()
+    w.add_blank_page(width=100, height=100)
+    w.encrypt("secret", algorithm="RC4-128")
+    f = tmp_path / "locked.pdf"
+    with open(f, "wb") as fh:
+        w.write(fh)
+    with pytest.raises(ValueError, match="password protected"):
+        ingest.load(str(f))
