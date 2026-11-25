@@ -19,6 +19,27 @@ It is a **desktop app** for Windows, macOS and Linux. It also has a **command li
 
 ---
 
+## Evaluation
+
+ROUGE F1 (x100, higher is better) on 500 CNN/DailyMail test articles, evenly sampled from the test split, picking 3 sentences each, scored against the human-written highlights:
+
+| Method | ROUGE-1 | ROUGE-2 | ROUGE-L |
+|---|---|---|---|
+| random | 30.1 | 10.0 | 27.1 |
+| lead-3 (first three sentences) | 40.9 | 18.4 | 37.4 |
+| TextRank, TF-IDF similarity (classic) | 34.3 | 14.3 | 30.9 |
+| TextRank, embedding similarity | 31.4 | 11.9 | 28.1 |
+| **This app** (embeddings + priors + MMR) | 33.0 | 12.8 | 29.5 |
+
+How to read it honestly:
+
+- **It beats chance and plain embedding TextRank, by a clear margin.** vs random: +2.9 (+1.8 to +3.9) ROUGE-1 (95% interval). vs embedding-only TextRank: +1.6 (+1.1 to +2.1).
+- **It loses to two simple baselines on news.** vs classic TF-IDF TextRank: -1.3 (-2.2 to -0.4). vs lead-3: -8.0 (-9.1 to -6.9). News writing puts the key facts in the first sentences, so lead-3 is famously hard to beat on this dataset, and ROUGE rewards the word overlap that TF-IDF similarity captures directly.
+- **What the parts do** (this app minus a version with one part removed, ROUGE-1): MMR +0.7 (+0.3 to +1.1), position prior +0.9 (+0.5 to +1.3), topic (centroid) prior -0.6 (-0.9 to -0.3). MMR and the position prior help. The topic prior slightly **hurts** on this data. That is a finding to follow up with a separate development set, not something to tune away on the test articles.
+- This measures overlap with a human summary on one English news dataset. It does not measure faithfulness (the app only returns sentences from your text, so that is true by construction), readability, other languages or other kinds of documents.
+
+Reproduce it, and see the method details and caveats, in [`evaluation/`](evaluation/README.md). `evaluation/sample_ids.txt` pins the exact articles so other implementations can be scored on the same set.
+
 ## Install
 
 ### Option 1: Download the app (no Python needed)
@@ -117,7 +138,9 @@ The default summaries are extractive: offline, free and faithful to the source. 
 2. Set `ANTHROPIC_API_KEY` in the environment that starts the app.
 3. Tick **AI rewrite** in the app, or pass `--ai` on the command line. It only appears when a key is set.
 
-Only the selected sentences are sent, not the whole document, and the model is told to add no facts. It is limited to 5 documents per request. The model defaults to `claude-opus-5-5`. Set `SUMMARIZER_MODEL=claude-haiku-5-5` for a cheaper one.
+**What is sent, and to whom.** Only when you tick **AI rewrite** (or pass `--ai`), the app sends the sentences it selected, plus a fixed instruction asking for a faithful rewrite, to the Anthropic API (`api.anthropic.com`) using your own key. Nothing else leaves your machine: not the rest of the document, the file name, the keywords or the URL. With the option off, which is the default, the app makes no network request except the one-time model download (and fetching a web page when you ask it to summarize a link). The app stores nothing: your key is read from the environment and never written to disk, and summaries are not saved anywhere unless you export them. What Anthropic keeps is governed by [its terms and privacy policy](https://www.anthropic.com/legal/privacy) and your account settings, so don't use the option on text you aren't allowed to share with a third party.
+
+**It is also the one mode that can be wrong.** The default summary is made only of sentences from your document, so it cannot contain a fact the document doesn't. A rewrite is new text produced by a language model. It is told to add nothing, but check it against the original (use **Show in original**). It is limited to 5 documents per request. The model defaults to `claude-opus-5-5`. Set `SUMMARIZER_MODEL=claude-haiku-5-5` for a cheaper one.
 
 ## Settings
 
@@ -138,6 +161,18 @@ Only the selected sentences are sent, not the whole document, and the model is t
 - **Scanned PDFs return nothing:** the PDF has no text layer. OCR isn't supported yet.
 - **Non-English text:** the sentence splitter and the default model are tuned for English.
 
+## Known limits
+
+- **It only picks sentences.** It never rewrites, merges or compresses, so a summary can read choppily, can start with a pronoun ("He said...") whose referent was left out, and can't combine two facts into one sentence. That is the price of never inventing text. The optional AI rewrite smooths this, with the caveats above.
+- **It is tuned for English.** The sentence splitter, the stopword list used for keywords and the embedding model are English. Other languages still produce a summary, but a warning says it may be poor. The check is a heuristic, not a language detector: in 500 real English news articles it wrongly flagged one (a golf leaderboard, mostly names and scores), and it can't tell similar languages apart.
+- **Scanned PDFs have no text.** A PDF made of page images gives a clear error ("N pages but no text") instead of an empty summary. OCR isn't included. A PDF with some scanned pages and some real text is summarized from the real text and the scanned pages are silently skipped.
+- **Very short input is returned as is,** with a note, because there is nothing to leave out. A "sentence" needs at least three words, so headlines and fragments are ignored.
+- **Tables, lists and code are poor input.** Sentence splitting assumes prose. Spreadsheet-like text, slides and source code are split in odd places.
+- **On news, it does not beat simply taking the first three sentences, or classic TextRank** (see the evaluation above). I have measured only English news, so I can't say how it compares on reports, papers or meeting notes, where the key sentences are less often at the top.
+- **Long documents are summarized in two passes** (a shortlist per chunk, then a final ranking), which is fast but can miss a sentence that only matters in context.
+- **Size and warm-up.** The language model is about 130 MB and downloads on first use. Installers are 55 to 260 MB.
+- **Web pages:** article extraction works on normal articles. Pages that need JavaScript to show their text, or sit behind a login or paywall, return little or nothing.
+
 ## Project layout
 
 ```
@@ -152,7 +187,8 @@ text_summarizer/
 packaging/       installers: build_bundle.py (PyInstaller), windows/ (Inno Setup, WiX), linux/ (nfpm, AppImage), icons/
 site/            landing page, published to GitHub Pages
 tests/           pytest suite
-requirements.txt, requirements-desktop.txt, requirements-dev.txt
+evaluation/      ROUGE evaluation against baselines (fetch_data.py, run_eval.py, results.json)
+requirements.txt, requirements-desktop.txt, requirements-dev.txt, requirements-eval.txt
 .github/workflows/  ci.yml (tests), installers.yml (builds and tests every installer), release.yml (GitHub release), pages.yml (landing page)
 ```
 
@@ -173,7 +209,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Changes go in `CHANGELOG.md`.
+To rerun the ROUGE evaluation: `pip install -r requirements-eval.txt`, then see [`evaluation/`](evaluation/README.md). Changes go in `CHANGELOG.md`.
 
 ## Releasing (maintainers)
 

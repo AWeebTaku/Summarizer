@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **A ROUGE evaluation** (`evaluation/`): the app against random, lead-3, classic TF-IDF TextRank and embedding-only TextRank on 500 CNN/DailyMail test articles, with bootstrap intervals and a component ablation. The results table and its caveats are in the README.
+- **Edge cases:** a scanned PDF now gives a clear "pages but no text, probably a scan" error; password-protected and damaged PDFs have their own messages; non-English text and text too short to shorten produce a `warnings` entry that the command line, the API and the app show.
+- A "Known limits" section, and a plain statement in the README of what the AI rewrite sends and to whom.
+
+### Fixed
+- Keywords for non-English text were cut at accented letters ("comit" from "comité").
+
 ## 2.0.0
 
 A ground-up rewrite, with a new interface and a new summarizer.
