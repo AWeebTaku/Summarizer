@@ -1,5 +1,9 @@
 # Summarizer
 
+<!-- badges:start -->
+[![CI](https://github.com/AWeebTaku/Summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/AWeebTaku/Summarizer/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/AWeebTaku/Summarizer?display_name=tag)](https://github.com/AWeebTaku/Summarizer/releases/latest) [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/AWeebTaku/Summarizer/blob/main/LICENSE) ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white) ![ONNX Runtime](https://img.shields.io/badge/ONNX%20Runtime-005CED?logo=onnx&logoColor=white) ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+<!-- badges:end -->
+
 Summarize anything you need to read: articles, reports, PDFs, Word files, web pages, CSV batches, or pasted text. It picks the sentences that carry the most meaning and returns them in their original order, so it **never invents facts**. It runs on your own machine, with no account, and nothing leaves your computer unless you turn on the optional AI rewrite.
 
 It is a **desktop app** for Windows, macOS and Linux. It also has a **command line** and can be used from Python code. The project's landing page is published with GitHub Pages from the `site/` folder.
