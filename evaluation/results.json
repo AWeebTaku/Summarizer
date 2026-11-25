@@ -1,0 +1,185 @@
+{
+  "articles": 500,
+  "sentences_per_summary": 3,
+  "dataset": "CNN/DailyMail 3.0.0 test, 500 evenly spaced articles",
+  "methods": {
+    "random": {
+      "rouge1": 30.08,
+      "rouge2": 10.04,
+      "rougeL": 27.13
+    },
+    "lead-3": {
+      "rouge1": 40.94,
+      "rouge2": 18.44,
+      "rougeL": 37.39
+    },
+    "textrank (tf-idf)": {
+      "rouge1": 34.29,
+      "rouge2": 14.33,
+      "rougeL": 30.91
+    },
+    "textrank (embeddings)": {
+      "rouge1": 31.4,
+      "rouge2": 11.88,
+      "rougeL": 28.12
+    },
+    "this app": {
+      "rouge1": 32.96,
+      "rouge2": 12.82,
+      "rougeL": 29.48
+    },
+    "app, no MMR": {
+      "rouge1": 32.28,
+      "rouge2": 12.55,
+      "rougeL": 28.97
+    },
+    "app, no position prior": {
+      "rouge1": 32.06,
+      "rouge2": 12.29,
+      "rougeL": 28.66
+    },
+    "app, no centroid prior": {
+      "rouge1": 33.6,
+      "rouge2": 13.38,
+      "rougeL": 30.14
+    },
+    "app, TextRank only": {
+      "rouge1": 31.4,
+      "rouge2": 11.88,
+      "rougeL": 28.12
+    }
+  },
+  "this_app_minus": {
+    "random": {
+      "rouge1": {
+        "diff": 2.88,
+        "ci95": [
+          1.77,
+          3.94
+        ]
+      },
+      "rouge2": {
+        "diff": 2.78,
+        "ci95": [
+          1.82,
+          3.65
+        ]
+      },
+      "rougeL": {
+        "diff": 2.35,
+        "ci95": [
+          1.26,
+          3.4
+        ]
+      }
+    },
+    "lead-3": {
+      "rouge1": {
+        "diff": -7.98,
+        "ci95": [
+          -9.09,
+          -6.93
+        ]
+      },
+      "rouge2": {
+        "diff": -5.62,
+        "ci95": [
+          -6.6,
+          -4.72
+        ]
+      },
+      "rougeL": {
+        "diff": -7.91,
+        "ci95": [
+          -8.99,
+          -6.87
+        ]
+      }
+    },
+    "textrank (tf-idf)": {
+      "rouge1": {
+        "diff": -1.32,
+        "ci95": [
+          -2.23,
+          -0.43
+        ]
+      },
+      "rouge2": {
+        "diff": -1.51,
+        "ci95": [
+          -2.26,
+          -0.81
+        ]
+      },
+      "rougeL": {
+        "diff": -1.43,
+        "ci95": [
+          -2.33,
+          -0.55
+        ]
+      }
+    },
+    "textrank (embeddings)": {
+      "rouge1": {
+        "diff": 1.56,
+        "ci95": [
+          1.1,
+          2.08
+        ]
+      },
+      "rouge2": {
+        "diff": 0.94,
+        "ci95": [
+          0.53,
+          1.39
+        ]
+      },
+      "rougeL": {
+        "diff": 1.36,
+        "ci95": [
+          0.91,
+          1.87
+        ]
+      }
+    }
+  },
+  "ablation_app_minus": {
+    "app, no MMR": {
+      "rouge1": {
+        "diff": 0.69,
+        "ci95": [
+          0.3,
+          1.09
+        ]
+      }
+    },
+    "app, no position prior": {
+      "rouge1": {
+        "diff": 0.9,
+        "ci95": [
+          0.54,
+          1.26
+        ]
+      }
+    },
+    "app, no centroid prior": {
+      "rouge1": {
+        "diff": -0.63,
+        "ci95": [
+          -0.95,
+          -0.33
+        ]
+      }
+    },
+    "app, TextRank only": {
+      "rouge1": {
+        "diff": 1.56,
+        "ci95": [
+          1.1,
+          2.08
+        ]
+      }
+    }
+  },
+  "seconds": 527
+}

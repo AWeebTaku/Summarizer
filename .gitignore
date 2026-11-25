@@ -147,3 +147,7 @@ desktop.ini
 
 # installer build output
 release/
+
+# evaluation data and caches (re-created by evaluation/fetch_data.py and run_eval.py)
+evaluation/cnn_dailymail_500.jsonl
+evaluation/.cache/

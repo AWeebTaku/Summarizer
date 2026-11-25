@@ -1,0 +1,4 @@
+# For the ROUGE evaluation in evaluation/ (not needed to use the app).
+#   pip install -r requirements-eval.txt
+-r requirements.txt
+rouge-score>=0.1.2
